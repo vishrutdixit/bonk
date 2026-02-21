@@ -1,11 +1,11 @@
-# infinite-anki (CLI/TUI MVP)
+# bonk (CLI/TUI MVP)
 
 Local-first, interview-style spaced repetition with Socratic follow-ups.
 
 ## Install (dev)
 
 ```bash
-cd apps/infinite-anki-cli
+cd bonk
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
@@ -15,12 +15,12 @@ pip install -e .
 ## Run
 
 ```bash
-infinite-anki
+bonk
 ```
 
 ## Config
 
-By default, state is stored at `~/.infinite_anki/data.sqlite`.
+By default, state is stored at `~/.bonk/data.sqlite`.
 
 Provider keys:
 - `OPENAI_API_KEY` (optional)

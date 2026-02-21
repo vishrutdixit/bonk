@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def data_dir() -> Path:
-    p = Path(os.path.expanduser("~/.infinite_anki"))
+    p = Path(os.path.expanduser("~/.bonk"))
     p.mkdir(parents=True, exist_ok=True)
     return p
 

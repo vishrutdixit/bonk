@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "infinite-anki"
+name = "bonk"
 version = "0.1.0"
 description = "CLI/TUI MVP: LLM-powered spaced repetition with Socratic follow-ups"
 readme = "README.md"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-infinite-anki = "infinite_anki.main:main"
+bonk = "bonk.main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["infinite_anki"]
+packages = ["bonk"]

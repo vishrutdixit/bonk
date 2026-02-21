@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from .tui.app import InfiniteAnkiApp
+from .tui.app import BonkApp
 
 
 def main() -> None:
-    app = InfiniteAnkiApp()
+    app = BonkApp()
     app.run()

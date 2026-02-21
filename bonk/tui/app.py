@@ -13,7 +13,7 @@ from ..engine import due_skills, finish_review, pick_followup, start_review
 SOCRATIC_CAP_SECONDS = 60
 
 
-class InfiniteAnkiApp(App):
+class BonkApp(App):
     CSS = """
     Screen { align: center middle; }
     #root { width: 100%; height: 100%; }
