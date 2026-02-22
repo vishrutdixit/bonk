@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 
 	"bonk/internal/db"
@@ -399,7 +400,7 @@ func (m Model) renderMainContent() string {
 	case stateLoading:
 		for _, ex := range m.history {
 			b.WriteString(coachLabelStyle.Render("Coach") + "\n")
-			b.WriteString(coachStyle.Render(wordWrap(ex.question, mainWidth-4)) + "\n\n")
+			b.WriteString(renderMarkdown(ex.question, mainWidth-4) + "\n")
 			b.WriteString(userLabelStyle.Render("You") + "\n")
 			b.WriteString(userStyle.Render(wordWrap(ex.answer, mainWidth-4)) + "\n\n")
 		}
@@ -409,14 +410,14 @@ func (m Model) renderMainContent() string {
 	case stateDrilling:
 		for _, ex := range m.history {
 			b.WriteString(coachLabelStyle.Render("Coach") + "\n")
-			b.WriteString(coachStyle.Render(wordWrap(ex.question, mainWidth-4)) + "\n\n")
+			b.WriteString(renderMarkdown(ex.question, mainWidth-4) + "\n")
 			b.WriteString(userLabelStyle.Render("You") + "\n")
 			b.WriteString(userStyle.Render(wordWrap(ex.answer, mainWidth-4)) + "\n\n")
 		}
 
 		if m.lastResp != nil {
 			b.WriteString(coachLabelStyle.Render("Coach") + "\n")
-			b.WriteString(coachStyle.Render(wordWrap(m.lastResp.Text, mainWidth-4)) + "\n\n")
+			b.WriteString(renderMarkdown(m.lastResp.Text, mainWidth-4) + "\n")
 		}
 
 		b.WriteString(userLabelStyle.Render("You") + "\n")
@@ -426,7 +427,7 @@ func (m Model) renderMainContent() string {
 	case stateRating:
 		if m.lastResp != nil {
 			b.WriteString(coachLabelStyle.Render("Coach") + "\n")
-			b.WriteString(coachStyle.Render(wordWrap(m.lastResp.Text, mainWidth-4)) + "\n\n")
+			b.WriteString(renderMarkdown(m.lastResp.Text, mainWidth-4) + "\n")
 		}
 
 		b.WriteString(dividerStyle.Render(strings.Repeat("─", min(50, mainWidth-4))) + "\n\n")
@@ -470,6 +471,22 @@ func (m Model) renderSidebar() string {
 	}
 
 	return b.String()
+}
+
+func renderMarkdown(text string, width int) string {
+	if width <= 0 {
+		width = 60
+	}
+	r, _ := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(width),
+	)
+	out, err := r.Render(text)
+	if err != nil {
+		return text
+	}
+	// Trim extra newlines glamour adds
+	return strings.TrimSpace(out)
 }
 
 func renderSparkline(ratings []int) string {
