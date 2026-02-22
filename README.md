@@ -1,29 +1,29 @@
-# bonk (CLI/TUI MVP)
+# bonk
 
-Local-first, interview-style spaced repetition with Socratic follow-ups.
+LLM-powered spaced repetition for technical skills. Socratic drilling with SM-2 scheduling.
 
-## Install (dev)
+## Install
 
 ```bash
-cd bonk
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -U pip
-pip install -e .
+go build -o bin/bonk ./cmd/bonk
+# Optional: add bin/ to PATH or copy to ~/bin
 ```
 
 ## Run
 
 ```bash
-bonk
+./bin/bonk           # Drill (prioritizes due → new → random)
+./bin/bonk ds        # Data structures only
+./bin/bonk algo      # Algorithm patterns only
+./bin/bonk sys       # System design only
+./bin/bonk --skill X # Specific skill
+./bin/bonk list      # List all skills
+./bin/bonk stats     # Show progress
 ```
 
 ## Config
 
-By default, state is stored at `~/.bonk/data.sqlite`.
+State: `~/.bonk/data.sqlite`
 
-Provider keys:
-- `OPENAI_API_KEY` (optional)
-- `ANTHROPIC_API_KEY` (optional)
-
-For the MVP demo, the app works even without keys (uses built-in prompts).
+- `ANTHROPIC_API_KEY` (required for drills)
+- `BONK_MODEL` (optional, default: claude-sonnet-4-20250514)
