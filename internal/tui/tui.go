@@ -226,7 +226,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "enter", "s", " ":
 				return m, m.startDrill()
-			case "q", "ctrl+c":
+			case "q":
+				m.quitting = true
+				return m, tea.Quit
+			}
+			if msg.Type == tea.KeyEsc || msg.Type == tea.KeyCtrlC {
 				m.quitting = true
 				return m, tea.Quit
 			}
@@ -234,6 +238,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateDrilling:
 			switch msg.Type {
 			case tea.KeyCtrlC:
+				// Clear buffer
+				m.textarea.Reset()
+				return m, nil
+			case tea.KeyEsc:
 				m.quitting = true
 				return m, tea.Quit
 			case tea.KeyEnter:
@@ -272,6 +280,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				return m, m.getCoachResponse(answer)
 			default:
+				// q quits if buffer is empty
+				if msg.String() == "q" && strings.TrimSpace(m.textarea.Value()) == "" {
+					m.quitting = true
+					return m, tea.Quit
+				}
 				var cmd tea.Cmd
 				m.textarea, cmd = m.textarea.Update(msg)
 				return m, cmd
@@ -293,13 +306,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = stateDrilling
 				m.textarea.Focus()
 				return m, nil
-			case "q", "ctrl+c":
+			case "q", "esc":
+				m.quitting = true
+				return m, tea.Quit
+			}
+			if msg.Type == tea.KeyEsc {
 				m.quitting = true
 				return m, tea.Quit
 			}
 
 		case stateLoading:
-			if msg.Type == tea.KeyCtrlC {
+			if msg.Type == tea.KeyEsc || msg.Type == tea.KeyCtrlC || msg.String() == "q" {
 				m.quitting = true
 				return m, tea.Quit
 			}
@@ -422,7 +439,7 @@ func (m Model) renderMainContent() string {
 
 		b.WriteString(userLabelStyle.Render("You") + "\n")
 		b.WriteString(m.textarea.View() + "\n\n")
-		b.WriteString(helpStyle.Render("enter submit • ctrl+c quit"))
+		b.WriteString(helpStyle.Render("enter submit • ctrl+c clear • esc quit"))
 
 	case stateRating:
 		if m.lastResp != nil {
@@ -478,7 +495,7 @@ func renderMarkdown(text string, width int) string {
 		width = 60
 	}
 	r, _ := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
+		glamour.WithStylePath("dark"),
 		glamour.WithWordWrap(width),
 	)
 	out, err := r.Render(text)
