@@ -242,21 +242,22 @@ func init() {
 
 	register(&Skill{
 		ID:          "segment-trees",
-		Name:        "Segment Trees",
+		Name:        "Segment Trees & Fenwick Trees",
 		Domain:      "data-structures",
-		Description: "Tree structure for efficient range queries and point updates",
+		Description: "Tree structures for efficient range queries and point updates",
 		Facets: []string{
-			"structure (complete binary tree over array)",
-			"build O(n), query/update O(log n)",
+			"segment tree structure (complete binary tree over array)",
+			"segment tree ops: build O(n), query/update O(log n)",
 			"lazy propagation for range updates",
-			"application (range sum, min/max, GCD)",
-			"when to use vs prefix sum or Fenwick tree",
+			"Fenwick tree (BIT): simpler, less memory, prefix sums only",
+			"Fenwick tree ops: update O(log n), prefix query O(log n)",
+			"when to use segment tree vs Fenwick vs prefix sum",
 		},
 		ExampleProblems: []string{
 			"Range sum query - mutable",
 			"Count of range sum",
+			"Count of smaller numbers after self",
 			"Range minimum query",
-			"Falling squares",
 			"My calendar III",
 		},
 	})
@@ -557,23 +558,255 @@ func init() {
 	})
 
 	register(&Skill{
-		ID:          "shortest-path",
-		Name:        "Shortest Path Algorithms",
+		ID:          "graph-algorithms",
+		Name:        "Graph Algorithms",
 		Domain:      "algorithm-patterns",
-		Description: "Finding optimal paths in weighted graphs",
+		Description: "Shortest paths and minimum spanning trees in weighted graphs",
 		Facets: []string{
-			"Dijkstra's algorithm (non-negative weights, greedy)",
-			"Bellman-Ford (handles negative weights)",
-			"when to use BFS vs Dijkstra",
-			"negative cycle detection",
-			"priority queue optimization for Dijkstra",
+			"Dijkstra's algorithm (non-negative weights, greedy with priority queue)",
+			"Bellman-Ford (handles negative weights, detects negative cycles)",
+			"when to use BFS vs Dijkstra vs Bellman-Ford",
+			"Prim's algorithm (MST via greedy, similar to Dijkstra)",
+			"Kruskal's algorithm (MST via union-find, sort edges)",
+			"MST properties (cut property, cycle property)",
 		},
 		ExampleProblems: []string{
 			"Network delay time",
 			"Cheapest flights within K stops",
-			"Path with minimum effort",
+			"Min cost to connect all points",
 			"Swim in rising water",
-			"Find the city with smallest number of neighbors",
+			"Path with minimum effort",
+		},
+	})
+
+	register(&Skill{
+		ID:          "monotonic-stack",
+		Name:        "Monotonic Stack",
+		Domain:      "algorithm-patterns",
+		Description: "Stack maintaining increasing/decreasing order for next greater/smaller problems",
+		Facets: []string{
+			"recognition (next greater/smaller element pattern)",
+			"monotonic increasing vs decreasing stack",
+			"when to pop (element breaks monotonic property)",
+			"what to store (index vs value)",
+			"complexity (O(n) - each element pushed/popped once)",
+		},
+		ExampleProblems: []string{
+			"Next greater element",
+			"Daily temperatures",
+			"Largest rectangle in histogram",
+			"Trapping rain water",
+			"Remove K digits",
+		},
+	})
+
+	register(&Skill{
+		ID:          "rolling-hash",
+		Name:        "Rolling Hash / Rabin-Karp",
+		Domain:      "algorithm-patterns",
+		Description: "O(1) hash updates for sliding window over strings",
+		Facets: []string{
+			"hash function (polynomial rolling hash)",
+			"adding new character, removing old character",
+			"modular arithmetic to prevent overflow",
+			"collision handling (verify on hash match)",
+			"application (string matching, repeated substrings)",
+		},
+		ExampleProblems: []string{
+			"Repeated DNA sequences",
+			"Longest duplicate substring",
+			"Find all anagrams in a string",
+			"Check if string contains all binary codes of size K",
+			"Shortest palindrome (with reverse comparison)",
+		},
+	})
+
+	register(&Skill{
+		ID:          "string-algorithms",
+		Name:        "String Algorithms",
+		Domain:      "algorithm-patterns",
+		Description: "Pattern matching and string manipulation techniques",
+		Facets: []string{
+			"KMP algorithm (failure function, O(n+m) matching)",
+			"Z-algorithm (Z-array for pattern occurrences)",
+			"palindrome techniques (expand around center, Manacher's)",
+			"string building (StringBuilder, join patterns)",
+			"lexicographic ordering and comparison",
+		},
+		ExampleProblems: []string{
+			"Longest palindromic substring",
+			"Implement strStr (pattern matching)",
+			"Shortest palindrome",
+			"Palindrome partitioning",
+			"Distinct subsequences",
+		},
+	})
+
+	register(&Skill{
+		ID:          "math-tricks",
+		Name:        "Math & Number Theory",
+		Domain:      "algorithm-patterns",
+		Description: "Mathematical techniques for algorithm problems",
+		Facets: []string{
+			"digit manipulation (extract digits, digit sum)",
+			"GCD/LCM (Euclidean algorithm)",
+			"modular arithmetic (mod properties, mod inverse)",
+			"prime numbers (sieve, primality testing)",
+			"overflow handling (when to use long, mod 10^9+7)",
+		},
+		ExampleProblems: []string{
+			"Pow(x, n) - fast exponentiation",
+			"Count primes (Sieve of Eratosthenes)",
+			"Add digits (digital root)",
+			"Fraction to recurring decimal",
+			"Max points on a line (GCD for slope)",
+		},
+	})
+
+	register(&Skill{
+		ID:          "simulation",
+		Name:        "Simulation",
+		Domain:      "algorithm-patterns",
+		Description: "Step-by-step execution following problem rules",
+		Facets: []string{
+			"state representation (what to track)",
+			"transition rules (how state changes each step)",
+			"termination conditions",
+			"optimization (detect cycles, skip redundant steps)",
+			"matrix traversal patterns (spiral, diagonal)",
+		},
+		ExampleProblems: []string{
+			"Spiral matrix",
+			"Game of life",
+			"Robot bounded in circle",
+			"Asteroid collision",
+			"Design snake game",
+		},
+	})
+
+	register(&Skill{
+		ID:          "counting",
+		Name:        "Counting & Combinatorics",
+		Domain:      "algorithm-patterns",
+		Description: "Counting arrangements, combinations, and paths",
+		Facets: []string{
+			"permutations vs combinations formula",
+			"Pascal's triangle (nCr computation)",
+			"inclusion-exclusion principle",
+			"counting paths in grid (DP approach)",
+			"Catalan numbers (valid parentheses, BST count)",
+		},
+		ExampleProblems: []string{
+			"Unique paths",
+			"Unique paths II (with obstacles)",
+			"Unique binary search trees",
+			"Letter combinations of phone number",
+			"Count sorted vowel strings",
+		},
+	})
+
+	register(&Skill{
+		ID:          "design-ds",
+		Name:        "Data Structure Design",
+		Domain:      "algorithm-patterns",
+		Description: "Implementing data structures with specific constraints",
+		Facets: []string{
+			"combining multiple DS (hashmap + linked list for LRU)",
+			"amortized analysis (when occasional expensive ops are OK)",
+			"lazy vs eager computation",
+			"iterator design (hasNext, next pattern)",
+			"handling edge cases (empty, single element)",
+		},
+		ExampleProblems: []string{
+			"LRU cache",
+			"LFU cache",
+			"Min stack",
+			"Design Twitter",
+			"Insert delete getRandom O(1)",
+		},
+	})
+
+	register(&Skill{
+		ID:          "divide-and-conquer",
+		Name:        "Divide and Conquer",
+		Domain:      "algorithm-patterns",
+		Description: "Breaking problems into subproblems, solving recursively, combining results",
+		Facets: []string{
+			"pattern: divide → conquer → combine",
+			"merge sort (split, sort halves, merge)",
+			"quick select (partition to find kth element in O(n) avg)",
+			"closest pair of points (geometric D&C)",
+			"recurrence relations (Master theorem basics)",
+		},
+		ExampleProblems: []string{
+			"Merge sort",
+			"Kth largest element (quick select)",
+			"Count of range sum",
+			"Median of two sorted arrays",
+			"Maximum subarray (D&C approach)",
+		},
+	})
+
+	register(&Skill{
+		ID:          "line-sweep",
+		Name:        "Line Sweep",
+		Domain:      "algorithm-patterns",
+		Description: "Processing events in sorted order along an axis",
+		Facets: []string{
+			"event representation (start/end points with type)",
+			"sorting events (by position, then by type for ties)",
+			"maintaining active set (what's currently intersecting)",
+			"counting overlaps (track entry/exit)",
+			"combining with other DS (heap, balanced BST)",
+		},
+		ExampleProblems: []string{
+			"The skyline problem",
+			"Meeting rooms II (min rooms needed)",
+			"Rectangle area II",
+			"My calendar II",
+			"Employee free time",
+		},
+	})
+
+	register(&Skill{
+		ID:          "reservoir-sampling",
+		Name:        "Reservoir Sampling & Randomization",
+		Domain:      "algorithm-patterns",
+		Description: "Random selection from streams and shuffling algorithms",
+		Facets: []string{
+			"reservoir sampling (select k items from unknown-size stream)",
+			"why it works (probability proof)",
+			"Fisher-Yates shuffle (unbiased permutation)",
+			"random selection with weights",
+			"sampling without replacement",
+		},
+		ExampleProblems: []string{
+			"Linked list random node",
+			"Random pick index",
+			"Random pick with weight",
+			"Shuffle an array",
+			"Random point in non-overlapping rectangles",
+		},
+	})
+
+	register(&Skill{
+		ID:          "game-theory",
+		Name:        "Game Theory",
+		Domain:      "algorithm-patterns",
+		Description: "Optimal play in two-player games",
+		Facets: []string{
+			"minimax (maximize own score, minimize opponent's)",
+			"winning vs losing positions (work backwards)",
+			"nim game (XOR of pile sizes)",
+			"Sprague-Grundy theorem (game states as numbers)",
+			"alpha-beta pruning (optimization for minimax)",
+		},
+		ExampleProblems: []string{
+			"Nim game",
+			"Stone game",
+			"Predict the winner",
+			"Can I win",
+			"Cat and mouse",
 		},
 	})
 
@@ -775,6 +1008,86 @@ func init() {
 			"Leader election for database cluster",
 			"Service discovery for microservices",
 			"Distributed configuration management",
+		},
+	})
+
+	register(&Skill{
+		ID:          "search-systems",
+		Name:        "Search Systems",
+		Domain:      "system-design",
+		Description: "Full-text search, indexing, and query systems",
+		Facets: []string{
+			"inverted index (term → document mapping)",
+			"tokenization and text processing (stemming, stopwords)",
+			"ranking algorithms (TF-IDF, BM25 basics)",
+			"autocomplete and typeahead (trie + ranking)",
+			"scaling search (sharding by term vs document)",
+		},
+		ExampleProblems: []string{
+			"Design a search engine",
+			"Design autocomplete system",
+			"Design a document search service",
+			"Design a product search for e-commerce",
+		},
+	})
+
+	register(&Skill{
+		ID:          "real-time-systems",
+		Name:        "Real-Time Systems",
+		Domain:      "system-design",
+		Description: "Push-based communication and live updates",
+		Facets: []string{
+			"WebSockets (persistent bidirectional connection)",
+			"long polling (simulated push over HTTP)",
+			"Server-Sent Events (server push, simpler than WS)",
+			"presence systems (online/offline status)",
+			"fan-out strategies (push vs pull vs hybrid)",
+		},
+		ExampleProblems: []string{
+			"Design a chat application",
+			"Design a live sports scoreboard",
+			"Design a collaborative document editor",
+			"Design a notification system with live updates",
+		},
+	})
+
+	register(&Skill{
+		ID:          "storage-systems",
+		Name:        "Storage Systems",
+		Domain:      "system-design",
+		Description: "Object storage, file systems, and data persistence",
+		Facets: []string{
+			"object storage (S3-style: buckets, keys, metadata)",
+			"block vs file vs object storage trade-offs",
+			"data durability (replication, erasure coding)",
+			"tiered storage (hot/warm/cold)",
+			"consistency models in distributed storage",
+		},
+		ExampleProblems: []string{
+			"Design a file storage service (Dropbox)",
+			"Design an image hosting service",
+			"Design a video storage and streaming service",
+			"Design a backup system",
+		},
+	})
+
+	register(&Skill{
+		ID:          "observability",
+		Name:        "Observability",
+		Domain:      "system-design",
+		Description: "Monitoring, logging, tracing, and alerting",
+		Facets: []string{
+			"three pillars: logs, metrics, traces",
+			"log aggregation (ELK stack, structured logging)",
+			"metrics collection (counters, gauges, histograms)",
+			"distributed tracing (trace IDs, spans)",
+			"alerting strategies (thresholds, anomaly detection)",
+		},
+		ExampleProblems: []string{
+			"Design a logging infrastructure",
+			"Design a metrics collection system",
+			"Design a distributed tracing system",
+			"Design an alerting system",
 		},
 	})
 }
