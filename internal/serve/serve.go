@@ -29,7 +29,8 @@ func Run(port string) error {
 	localIP := getLocalIP()
 
 	// Build ttyd command
-	cmd := exec.Command("ttyd", "-p", port, exe)
+	// -W enables writable mode (allows input from browser)
+	cmd := exec.Command("ttyd", "-W", "-p", port, exe)
 	cmd.Env = os.Environ() // Pass through env vars (ANTHROPIC_API_KEY)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
