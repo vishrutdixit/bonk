@@ -34,7 +34,7 @@ func Run(port string) error {
 	cmd := exec.Command("ttyd",
 		"-W",
 		"-p", port,
-		"-t", "fontSize=16",
+		"-t", "fontSize=40",
 		"-t", "cursorBlink=true",
 		exe,
 	)
