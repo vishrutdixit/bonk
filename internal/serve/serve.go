@@ -30,7 +30,14 @@ func Run(port string) error {
 
 	// Build ttyd command
 	// -W enables writable mode (allows input from browser)
-	cmd := exec.Command("ttyd", "-W", "-p", port, exe)
+	// -t options set xterm.js terminal options for better mobile experience
+	cmd := exec.Command("ttyd",
+		"-W",
+		"-p", port,
+		"-t", "fontSize=16",
+		"-t", "cursorBlink=true",
+		exe,
+	)
 	cmd.Env = os.Environ() // Pass through env vars (ANTHROPIC_API_KEY)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
