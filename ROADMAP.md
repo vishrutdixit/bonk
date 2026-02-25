@@ -1,8 +1,8 @@
 # Roadmap
 
-Ideas for future development, roughly prioritized.
+## P0: Foundation (Ship First)
 
-## High Priority
+Quick wins that unblock other work.
 
 ### CI/CD (S)
 
@@ -20,6 +20,77 @@ Developer tooling for debugging and skill iteration.
 - Press `S` during drill to show: skill ID, current facets, difficulty level, session history context
 - Useful for tuning skill definitions and prompt behavior
 
+## P1: High Priority
+
+Core features that significantly expand capability.
+
+### Mobile Access (S-M)
+
+Use bonk from phone.
+
+- **Phase 1:** Web terminal via `ttyd` — `ttyd bonk` exposes TUI in browser. Minimal code changes, works immediately.
+- **Phase 2:** Simple web UI — extract core logic into API, build lightweight mobile-friendly frontend.
+- **Phase 3:** PWA — installable web app with offline support, push notifications for daily reminders.
+
+Start with ttyd for instant mobile access.
+
+### LC Domain & Archetypes (M-L)
+
+New domain for drilling LeetCode problem-solving strategy (not implementation).
+
+**Problem Archetypes** — a layer above skills, composite patterns:
+- Archetype = recognizable problem template (e.g., "Cooldown Scheduling")
+- Maps to multiple underlying skills (e.g., heaps + greedy + queue)
+- Drill focuses on recognition: "Given this problem, what's the archetype?"
+
+Example archetypes:
+- Cooldown Scheduling (Task Scheduler, Rearrange String K Apart)
+- Two Heaps for Median (Find Median from Data Stream)
+- Monotonic Stack Optimization (Largest Rectangle, Trapping Rain Water)
+- Sliding Window + Hash (Minimum Window Substring)
+- BFS with Complex State (Open the Lock, Word Ladder)
+
+**LC Domain structure:**
+```
+[lc]
+  cooldown-scheduling      Cooldown Scheduling Problems
+  sliding-window-hash      Sliding Window + Hash Map
+  two-heaps-median         Two Heaps for Running Median
+  monotonic-optimization   Monotonic Stack Optimization
+  dp-on-intervals          DP on Intervals
+  graph-state-bfs          BFS with Complex State
+```
+
+Each LC skill drills:
+- Pattern recognition: "What's the key insight?"
+- Strategy: "What data structures? Why?"
+- Complexity: "Time/space?"
+- NOT implementation — that's what solving LC is for
+
+### LC Scraper (M)
+
+Build tooling to extract problems and editorials from LeetCode.
+
+- Scrape problem descriptions, constraints, examples
+- Extract editorial solutions and explanations
+- Map problems to archetypes/skills automatically (or with LLM assist)
+- Build up LC domain skill bank from real data
+
+### Voice Mode (M)
+
+Practice explaining concepts out loud, mimicking real interviews. **Free with local tools.**
+
+- **TTS:** macOS `say` command (free, built-in) or `piper` (local neural TTS)
+- **STT:** `whisper.cpp` (free, runs locally, great accuracy)
+- **Flow:** Question spoken → user explains aloud → transcribed → sent to LLM → response spoken
+- **Modes:** `bonk --voice` for full voice I/O, or hybrid (voice questions, typed answers)
+
+Start with TTS-only (`say` on macOS), add STT via whisper.cpp later.
+
+## P2: Medium Priority
+
+Improve core experience.
+
 ### Onboarding (M)
 
 Initial calibration for new users.
@@ -28,8 +99,6 @@ Initial calibration for new users.
 - Option to mark skills as "already know" to skip or reduce frequency
 - Seed initial difficulty based on responses instead of waiting for 3 sessions
 - Store in `~/.bonk/profile.json`
-
-## Medium Priority
 
 ### Better Analytics (M)
 
@@ -77,19 +146,9 @@ Based on recent sessions:
   → Search in Rotated Array       https://leetcode.com/problems/search-in-rotated-sorted-array/
 ```
 
-## Lower Priority
+## P3: Lower Priority
 
-### Voice Mode (M-L)
-
-Practice explaining concepts out loud, mimicking real interviews.
-
-- **TTS (text-to-speech):** macOS `say` command for questions (easy win), or cloud TTS for better quality
-- **STT (speech-to-text):** Whisper (local, private) or macOS Dictation for capturing answers
-- **Flow:** Question spoken → user explains aloud → transcribed → sent to LLM → response spoken
-- **Modes:** `bonk --voice` for full voice I/O, or hybrid (voice questions, typed answers)
-- **Value:** Practices articulation, catches filler words, mimics phone screens
-
-Start simple with TTS-only (`say` on macOS), then add STT later.
+Nice-to-haves.
 
 ### Visualization (M)
 
@@ -97,24 +156,9 @@ Visual aids for tree/graph/DP problems.
 
 - **ASCII art in terminal:** No dependencies, works everywhere, LLM can generate inline
 - **Graphviz → image:** Beautiful graphs/trees, opens external viewer
-- **Sixel/iTerm2 inline images:** Images in terminal (limited terminal support)
 - **Structured data rendering:** LLM outputs structured format, we render it
 
-Use cases:
-- Tree structure when drilling BST traversal
-- Graph visualization for BFS/DFS
-- Linked list diagrams for pointer manipulation
-- DP tables for dynamic programming
-
-### Mobile Access (M)
-
-Use bonk from phone.
-
-- **Web terminal (ttyd/gotty):** `ttyd bonk` exposes TUI in browser. Minimal code changes, works immediately.
-- **Simple web UI:** Extract core logic into API, build lightweight mobile-friendly frontend.
-- **PWA (long term):** Installable web app with offline support, push notifications for daily reminders.
-
-Pragmatic path: Start with ttyd for instant mobile access, iterate toward proper web UI later.
+Use cases: tree traversal, graph BFS/DFS, linked list manipulation, DP tables.
 
 ### Streaming LLM Responses (M)
 
@@ -145,59 +189,11 @@ Export drill content to Anki for offline flashcard practice.
 - Generate cards from skill facets
 - Include example problems as card prompts
 
-## LC Domain & Archetypes
+## Future Ideas
 
-### Problem Archetypes (M)
-
-A layer above skills — composite patterns that combine multiple skills.
-
-- Archetype = recognizable problem template (e.g., "Cooldown Scheduling")
-- Maps to multiple underlying skills (e.g., heaps + greedy + queue)
-- Drill focuses on recognition: "Given this problem, what's the archetype?"
-- Each archetype has: pattern description, key insight, common variations, representative problems
-
-Example archetypes:
-- Cooldown Scheduling (Task Scheduler, Rearrange String K Apart)
-- Two Heaps for Median (Find Median from Data Stream)
-- Monotonic Stack Optimization (Largest Rectangle, Trapping Rain Water)
-- Sliding Window + Hash (Minimum Window Substring)
-- BFS with Complex State (Open the Lock, Word Ladder)
-
-### LC Domain (M-L)
-
-New domain for drilling LeetCode problem-solving strategy (not implementation).
-
-```
-[lc]
-  cooldown-scheduling      Cooldown Scheduling Problems
-  sliding-window-hash      Sliding Window + Hash Map
-  two-heaps-median         Two Heaps for Running Median
-  monotonic-optimization   Monotonic Stack Optimization
-  dp-on-intervals          DP on Intervals
-  graph-state-bfs          BFS with Complex State
-```
-
-Each LC skill drills:
-- Pattern recognition: "What's the key insight?"
-- Strategy: "What data structures? Why?"
-- Complexity: "Time/space?"
-- NOT implementation — that's what solving LC is for
-
-### LC Scraper (M)
-
-Build tooling to extract problems and editorials from LeetCode.
-
-- Scrape problem descriptions, constraints, examples
-- Extract editorial solutions and explanations
-- Map problems to archetypes/skills automatically (or with LLM assist)
-- Build up LC domain skill bank from real data
-- Could also extract problem tags and difficulty for metadata
-
-## Future Ideas (Unprioritized)
+Unprioritized explorations.
 
 ### Interview Simulation Mode
-
-Timed sessions with stricter evaluation.
 
 - 45-minute timed drill
 - No hints, stricter Socratic questioning
@@ -206,15 +202,11 @@ Timed sessions with stricter evaluation.
 
 ### Drill Modes
 
-Different session lengths for different needs.
-
 - Quick drill (5 min) — one focused question
 - Standard (15 min) — current default
-- Deep dive (30 min) — thorough exploration of a skill
+- Deep dive (30 min) — thorough exploration
 
 ### Gamification
-
-Motivation through streaks and achievements.
 
 - Daily streaks with visual indicator
 - Achievements: "10 skills mastered", "7-day streak", "conquered hard mode"
@@ -222,21 +214,17 @@ Motivation through streaks and achievements.
 
 ### Import LeetCode History
 
-Seed skill ratings from existing LC progress.
-
 - Parse LC submission history
 - Map problems to skills
 - Bootstrap difficulty calibration
 
 ### Code Execution
 
-Actually run code during drills.
-
-- Write and test code snippets
+- Write and test code snippets during drills
 - Language-specific modes (Python/Go/Java idioms)
 - Integrate with local compiler/interpreter
 
-## Tech Debt / Fixes
+## Tech Debt
 
 - Fix `struggled` tracking (currently hardcoded to false in db.go)
 - Consider splitting large skills.go into per-domain files
