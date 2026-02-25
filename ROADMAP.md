@@ -28,11 +28,12 @@ Core features that significantly expand capability.
 
 Use bonk from phone.
 
-- **Phase 1:** Web terminal via `ttyd` — `ttyd bonk` exposes TUI in browser. Minimal code changes, works immediately.
+- **Phase 1:** Web terminal via `ttyd` — `bonk serve` wraps ttyd, prints local IP for phone access.
+- **Phase 1.5:** Tailscale integration — detect Tailscale IP for anywhere-access without port forwarding.
 - **Phase 2:** Simple web UI — extract core logic into API, build lightweight mobile-friendly frontend.
 - **Phase 3:** PWA — installable web app with offline support, push notifications for daily reminders.
 
-Start with ttyd for instant mobile access.
+Start with ttyd for instant mobile access (same network). Add Tailscale detection later for remote access.
 
 ### LC Domain & Archetypes (M-L)
 

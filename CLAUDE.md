@@ -13,6 +13,7 @@ go build -o bin/bonk ./cmd/bonk   # Build
 ./bin/bonk --skill hash-maps       # Specific skill
 ./bin/bonk list                    # List all skills
 ./bin/bonk stats                   # Show progress
+./bin/bonk serve                   # Web terminal for mobile access (requires ttyd)
 ```
 
 ## Environment
@@ -38,3 +39,10 @@ Bonk is an LLM-powered spaced repetition CLI for drilling technical skills using
 1. Due skills (overdue based on scheduling)
 2. New skills (never reviewed)
 3. Random fallback
+
+## Roadmap
+
+See `ROADMAP.md` for planned features and priorities. When working on this repo:
+- Consult ROADMAP.md before starting new features
+- Update ROADMAP.md when completing features or identifying new work
+- Use priority labels (P0, P1, P2, P3) to guide what to work on next

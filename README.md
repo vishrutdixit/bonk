@@ -21,6 +21,22 @@ go build -o bin/bonk ./cmd/bonk
 ./bin/bonk stats     # Show progress
 ```
 
+## Mobile Access
+
+Drill from your phone using web terminal:
+
+```bash
+# Install ttyd first
+brew install ttyd  # macOS
+apt install ttyd   # Linux
+
+# Start web terminal
+./bin/bonk serve              # http://localhost:8080
+./bin/bonk serve --port 9000  # Custom port
+```
+
+Open the "Network" URL from your phone (same WiFi network).
+
 ## Config
 
 State: `~/.bonk/data.sqlite`

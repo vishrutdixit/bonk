@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"bonk/internal/db"
+	"bonk/internal/serve"
 	"bonk/internal/skills"
 	"bonk/internal/tui"
 )
@@ -87,6 +88,15 @@ Domains:
 		Run:   runStats,
 	}
 	rootCmd.AddCommand(statsCmd)
+
+	// Serve command
+	serveCmd := &cobra.Command{
+		Use:   "serve",
+		Short: "Start web terminal for mobile access",
+		Run:   runServe,
+	}
+	serveCmd.Flags().StringP("port", "p", "8080", "Port to listen on")
+	rootCmd.AddCommand(serveCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -345,4 +355,12 @@ func truncate(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-1] + "…"
+}
+
+func runServe(cmd *cobra.Command, args []string) {
+	port, _ := cmd.Flags().GetString("port")
+	if err := serve.Run(port); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }
