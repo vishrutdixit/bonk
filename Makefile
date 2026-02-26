@@ -1,5 +1,5 @@
 # Bonk build configuration
-VERSION ?= 0.1.0
+VERSION ?= 0.2.0
 API_KEY ?=
 LDFLAGS := -s -w
 ifdef API_KEY
