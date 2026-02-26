@@ -73,7 +73,6 @@ Domains:
 	}
 
 	rootCmd.Flags().String("skill", "", "Specific skill ID to drill")
-	rootCmd.Flags().Bool("dev", false, "Enable dev mode (debug UI and prompt inspection)")
 
 	// List command
 	listCmd := &cobra.Command{
@@ -154,8 +153,7 @@ func runDrill(cmd *cobra.Command, args []string) {
 	// Run drill loop
 	allowDomainPicker := skillFlag == "" && len(args) == 0
 	for {
-		devMode, _ := cmd.Flags().GetBool("dev")
-		m := tui.NewModel(database, skill, devMode, allowDomainPicker)
+		m := tui.NewModel(database, skill, allowDomainPicker)
 		p := tea.NewProgram(m, tea.WithAltScreen())
 
 		finalModel, err := p.Run()

@@ -66,7 +66,6 @@ Homebrew: coming soon.
 ./bin/bonk --skill hash-maps
 ./bin/bonk list
 ./bin/bonk info hash-maps
-./bin/bonk --dev           # Debug panel (press S in-session)
 ```
 
 ## Mobile / Remote Drill

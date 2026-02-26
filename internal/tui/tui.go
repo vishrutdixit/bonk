@@ -102,7 +102,6 @@ type Model struct {
 	err               error
 	quitting          bool
 	continueToNext    bool
-	devMode           bool
 	showDebug         bool
 	historyCtx        string
 	difficulty        string
@@ -140,7 +139,7 @@ type sessionCreatedMsg struct {
 	err       error
 }
 
-func NewModel(database *db.DB, skill *skills.Skill, devMode bool, allowDomainPicker bool) Model {
+func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool) Model {
 	ta := textarea.New()
 	ta.Placeholder = ""
 	ta.CharLimit = 2000
@@ -183,7 +182,7 @@ func NewModel(database *db.DB, skill *skills.Skill, devMode bool, allowDomainPic
 		state:             stateWelcome,
 		turn:              0,
 		maxTurns:          10,
-		devMode:           devMode,
+		showDebug:         true,
 		allowDomainPicker: allowDomainPicker,
 		history:           []exchange{},
 		textarea:          ta,
@@ -304,7 +303,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateDrilling:
-			if m.devMode && msg.String() == "S" {
+			if msg.Type == tea.KeyTab || msg.Type == tea.KeyShiftTab {
 				m.showDebug = !m.showDebug
 				m.syncLayout()
 				return m, nil
@@ -364,7 +363,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateRating:
-			if m.devMode && msg.String() == "S" {
+			if msg.Type == tea.KeyTab || msg.Type == tea.KeyShiftTab {
 				m.showDebug = !m.showDebug
 				m.syncLayout()
 				return m, nil
@@ -399,7 +398,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateLoading:
-			if m.devMode && msg.String() == "S" {
+			if msg.Type == tea.KeyTab || msg.Type == tea.KeyShiftTab {
 				m.showDebug = !m.showDebug
 				m.syncLayout()
 				return m, nil
@@ -520,10 +519,7 @@ func (m Model) renderMainContent() string {
 
 		b.WriteString(userLabelStyle.Render("You") + "\n")
 		b.WriteString(m.textarea.View() + "\n\n")
-		help := "enter submit • ctrl+c clear • esc quit"
-		if m.devMode {
-			help += " • S debug"
-		}
+		help := "enter submit • ctrl+c clear • esc quit • tab sidebar"
 		b.WriteString(helpStyle.Render(help))
 
 	case stateRating:
@@ -547,10 +543,7 @@ func (m Model) renderMainContent() string {
 		b.WriteString(ratingKeyStyle.Render("[2]") + ratingOptionStyle.Render(" Hard  "))
 		b.WriteString(ratingKeyStyle.Render("[3]") + ratingOptionStyle.Render(" Good  "))
 		b.WriteString(ratingKeyStyle.Render("[4]") + ratingOptionStyle.Render(" Easy") + "\n\n")
-		help := "1-4 rate • c continue • q quit"
-		if m.devMode {
-			help += " • S debug"
-		}
+		help := "1-4 rate • c continue • q quit • tab sidebar"
 		b.WriteString(helpStyle.Render(help))
 	}
 
@@ -558,7 +551,7 @@ func (m Model) renderMainContent() string {
 }
 
 func (m Model) renderSidebar() string {
-	if m.devMode && m.showDebug {
+	if m.showDebug {
 		return m.renderDebugSidebar()
 	}
 
@@ -594,9 +587,6 @@ func (m Model) renderDebugSidebar() string {
 	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 
-	b.WriteString(labelStyle.Render("dev mode") + "\n")
-	b.WriteString(valueStyle.Render("on") + "\n\n")
-
 	b.WriteString(labelStyle.Render("skill id") + "\n")
 	b.WriteString(valueStyle.Render(m.skill.ID) + "\n\n")
 
@@ -624,7 +614,7 @@ func (m Model) renderDebugSidebar() string {
 }
 
 func (m Model) sidebarWidth() int {
-	if m.devMode && m.showDebug {
+	if m.showDebug {
 		return 52
 	}
 	return 16
