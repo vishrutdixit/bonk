@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"bonk/internal/skills"
@@ -53,6 +54,7 @@ type Response struct {
 	QuestionType string // "conceptual" or "problem"
 	IsFinal      bool
 	Assessment   string
+	LLMRating    int // 1-4 rating from LLM, 0 if not provided
 }
 
 type message struct {
@@ -174,12 +176,13 @@ You decide when to end based on their responses. Typically 3-6 exchanges, but go
 
 ## Output Format
 At the END of each response, add a metadata line in this exact format:
-[meta: facet=<facet_name>, type=<conceptual|problem>, final=<true|false>]
+[meta: facet=<facet_name>, type=<conceptual|problem>, final=<true|false>, rating=<1-4>]
 
 Where:
 - facet: which facet you're testing (use short names like "mechanics", "complexity", "application", etc.)
 - type: whether this is a conceptual or problem-based question
-- final: true only on exchange 4 when you give the assessment
+- final: true only when you give the final assessment
+- rating: your assessment of their understanding (1=poor, 2=shaky, 3=solid, 4=excellent). Include on EVERY exchange, not just final.
 
 ## Rules
 - Be concise - short questions, short feedback
@@ -267,13 +270,15 @@ Ask: "How would you approach this?"
 
 ## Output Format
 At the END of each response, add:
-[meta: facet=<facet>, type=problem, final=<true|false>]
+[meta: facet=<facet>, type=problem, final=<true|false>, rating=<1-4>]
+
+Where rating is your assessment of their understanding (1=poor, 2=shaky, 3=solid, 4=excellent). Include on EVERY exchange.
 
 Start by presenting a problem now.
 `, skill.Name, skill.Description, facets, problems, historySection, difficultySection)
 }
 
-var metaRegex = regexp.MustCompile(`\[meta:\s*facet=([^,]+),\s*type=([^,]+),\s*final=([^\]]+)\]`)
+var metaRegex = regexp.MustCompile(`\[meta:\s*facet=([^,]+),\s*type=([^,]+),\s*final=([^,\]]+)(?:,\s*rating=(\d))?\]`)
 
 func parseResponse(text string) *Response {
 	resp := &Response{Text: text}
@@ -283,6 +288,13 @@ func parseResponse(text string) *Response {
 		resp.Facet = strings.TrimSpace(match[1])
 		resp.QuestionType = strings.ToLower(strings.TrimSpace(match[2]))
 		resp.IsFinal = strings.ToLower(strings.TrimSpace(match[3])) == "true"
+
+		// Parse optional rating (1-4)
+		if len(match) > 4 && match[4] != "" {
+			if rating, err := strconv.Atoi(match[4]); err == nil && rating >= 1 && rating <= 4 {
+				resp.LLMRating = rating
+			}
+		}
 
 		// Remove meta line from display text
 		resp.Text = strings.TrimSpace(metaRegex.ReplaceAllString(text, ""))

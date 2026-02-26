@@ -105,6 +105,7 @@ type Model struct {
 	historyCtx     string
 	difficulty     string
 	systemPrompt   string
+	llmRating      int // LLM's rating of user performance (1-4, 0 if not provided)
 
 	// Welcome screen stats
 	totalSessions int
@@ -310,12 +311,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			switch msg.String() {
 			case "1", "2", "3", "4":
-				rating := int(msg.String()[0] - '0')
+				userRating := int(msg.String()[0] - '0')
 				assessment := ""
 				if m.lastResp != nil {
 					assessment = m.lastResp.Assessment
 				}
-				m.db.FinishSession(m.sessionID, rating, assessment)
+				// Compute combined rating (average of user + LLM, rounded)
+				finalRating := userRating
+				if m.llmRating > 0 {
+					finalRating = (userRating + m.llmRating + 1) / 2 // +1 for rounding
+				}
+				m.db.FinishSession(m.sessionID, finalRating, assessment)
 				m.continueToNext = true
 				return m, tea.Quit
 			case "c":
@@ -367,6 +373,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.resp.IsFinal || m.turn > m.maxTurns {
 			m.state = stateRating
+			m.llmRating = msg.resp.LLMRating
 		} else {
 			m.state = stateDrilling
 		}
@@ -475,6 +482,12 @@ func (m Model) renderMainContent() string {
 		b.WriteString(dividerStyle.Render(strings.Repeat("─", min(50, mainWidth-4))) + "\n\n")
 		b.WriteString(skillRevealStyle.Render(m.skill.Name) + "  ")
 		b.WriteString(domainStyle.Render(m.skill.Domain) + "\n\n")
+
+		// Show LLM's rating if available
+		if m.llmRating > 0 {
+			llmLabel := llmRatingLabel(m.llmRating)
+			b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Render("Coach thinks: ") + llmLabel + "\n\n")
+		}
 
 		b.WriteString(ratingStyle.Render("How did that go?") + "\n\n")
 		b.WriteString("  " + ratingKeyStyle.Render("[1]") + ratingOptionStyle.Render(" Again  "))
@@ -609,6 +622,22 @@ func renderSparkline(ratings []int) string {
 		result += style.Render(blocks[idx])
 	}
 	return result
+}
+
+func llmRatingLabel(rating int) string {
+	labels := map[int]struct {
+		text  string
+		color string
+	}{
+		1: {"Again", "210"},  // red
+		2: {"Hard", "214"},   // orange
+		3: {"Good", "114"},   // green
+		4: {"Easy", "212"},   // pink
+	}
+	if l, ok := labels[rating]; ok {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color(l.color)).Render(l.text)
+	}
+	return ""
 }
 
 func (m Model) renderWelcome() string {
