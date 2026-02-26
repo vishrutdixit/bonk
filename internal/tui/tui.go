@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textarea"
@@ -111,14 +112,16 @@ type Model struct {
 	allowDomainPicker bool
 
 	// Welcome screen stats
-	totalSessions int
-	currentStreak int
-	dueCount      int
-	dueWeekCount  int
-	newSkillCount int
-	avgRating     float64
-	todayCount    int
-	recentRatings []int
+	totalSessions  int
+	currentStreak  int
+	dueCount       int
+	dueWeekCount   int
+	newSkillCount  int
+	avgRating      float64
+	todayCount     int
+	recentRatings  []int
+	recentSessions []db.RecentSession
+	weakFacets     []db.FacetStats
 }
 
 type exchange struct {
@@ -166,6 +169,13 @@ func NewModel(database *db.DB, skill *skills.Skill, devMode bool, allowDomainPic
 	avgRating, _, _ := database.GetOverallAvgRating()
 	todayCount, _ := database.GetTodaySessionCount()
 	recentRatings, _ := database.GetRecentRatings(10)
+	recentSessions, _ := database.GetRecentSessions(5)
+	weakFacets, _ := database.GetWeakFacets(2)
+
+	defaultDomain := ""
+	if allowDomainPicker && skill != nil {
+		defaultDomain = skill.Domain
+	}
 
 	return Model{
 		db:                database,
@@ -187,6 +197,9 @@ func NewModel(database *db.DB, skill *skills.Skill, devMode bool, allowDomainPic
 		avgRating:         avgRating,
 		todayCount:        todayCount,
 		recentRatings:     recentRatings,
+		recentSessions:    recentSessions,
+		weakFacets:        weakFacets,
+		selectedDomain:    defaultDomain,
 	}
 }
 
@@ -211,7 +224,7 @@ func (m Model) getCoachResponse(userMsg string) tea.Cmd {
 }
 
 func (m *Model) startDrill() tea.Cmd {
-	if m.firstTimeDomainPickerEnabled() && m.selectedDomain != "" {
+	if m.domainPickerEnabled() && m.selectedDomain != "" {
 		if s := pickRandomSkillFromDomain(m.selectedDomain); s != nil {
 			m.skill = s
 		}
@@ -252,7 +265,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch m.state {
 		case stateWelcome:
-			if m.firstTimeDomainPickerEnabled() {
+			if m.domainPickerEnabled() {
+				if msg.Type == tea.KeyUp || msg.String() == "k" {
+					m.selectedDomain = cycleDomainSelection(m.selectedDomain, -1)
+					return m, nil
+				}
+				if msg.Type == tea.KeyDown || msg.String() == "j" {
+					m.selectedDomain = cycleDomainSelection(m.selectedDomain, 1)
+					return m, nil
+				}
+
 				switch msg.String() {
 				case "1":
 					m.selectedDomain = "data-structures"
@@ -284,6 +306,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateDrilling:
 			if m.devMode && msg.String() == "S" {
 				m.showDebug = !m.showDebug
+				m.syncLayout()
 				return m, nil
 			}
 			switch msg.Type {
@@ -343,6 +366,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateRating:
 			if m.devMode && msg.String() == "S" {
 				m.showDebug = !m.showDebug
+				m.syncLayout()
 				return m, nil
 			}
 			switch msg.String() {
@@ -377,6 +401,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateLoading:
 			if m.devMode && msg.String() == "S" {
 				m.showDebug = !m.showDebug
+				m.syncLayout()
 				return m, nil
 			}
 			if msg.Type == tea.KeyEsc || msg.Type == tea.KeyCtrlC || msg.String() == "q" {
@@ -388,9 +413,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.textarea.SetWidth(msg.Width - 4)
-		m.viewport.Width = msg.Width - 4
-		m.viewport.Height = msg.Height - 15
+		m.syncLayout()
 
 	case sessionCreatedMsg:
 		if msg.err != nil {
@@ -444,10 +467,7 @@ func (m Model) renderWithSidebar() string {
 
 	// Calculate widths
 	sidebarWidth := m.sidebarWidth()
-	mainWidth := m.width - sidebarWidth - 3 // 3 for separator
-	if mainWidth < 40 {
-		mainWidth = 40
-	}
+	mainWidth := m.mainPanelWidth()
 
 	// Style the panels
 	mainStyle := lipgloss.NewStyle().Width(mainWidth)
@@ -472,10 +492,7 @@ func (m Model) renderMainContent() string {
 	b.WriteString(m.renderHeader())
 	b.WriteString("\n")
 
-	mainWidth := m.width - m.sidebarWidth() - 4
-	if mainWidth < 40 {
-		mainWidth = 40
-	}
+	mainWidth := m.mainContentWidth()
 
 	switch m.state {
 	case stateLoading:
@@ -708,10 +725,32 @@ func (m Model) renderWelcome() string {
 		b.WriteString(renderSparkline(m.recentRatings))
 		b.WriteString("\n")
 	}
+	if len(m.recentRatings) > 0 || len(m.recentSessions) > 0 {
+		b.WriteString(helpStyle.Render("  legend: "))
+		b.WriteString(ratingGlyph(1) + " again  ")
+		b.WriteString(ratingGlyph(2) + " hard  ")
+		b.WriteString(ratingGlyph(3) + " good  ")
+		b.WriteString(ratingGlyph(4) + " easy")
+		b.WriteString("\n")
+	}
+	if len(m.recentSessions) > 0 {
+		b.WriteString(helpStyle.Render(fmt.Sprintf("  last drilled: %s", relativeTime(m.recentSessions[0].FinishedAt))))
+		b.WriteString("\n")
+	}
+	if len(m.weakFacets) > 0 {
+		b.WriteString(helpStyle.Render("  weak facets: "))
+		for i, facet := range m.weakFacets {
+			if i > 0 {
+				b.WriteString(helpStyle.Render("  •  "))
+			}
+			b.WriteString(strings.ToLower(facet.Facet))
+		}
+		b.WriteString("\n")
+	}
 	b.WriteString("\n")
 
-	if m.firstTimeDomainPickerEnabled() {
-		b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("214")).Render("  First time setup: choose a domain"))
+	if m.domainPickerEnabled() {
+		b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("214")).Render("  choose a domain"))
 		b.WriteString("\n\n")
 		options := []struct {
 			key    string
@@ -739,6 +778,19 @@ func (m Model) renderWelcome() string {
 			b.WriteString(domainStyle.Render(fmt.Sprintf("  next up: %s", domainHint)))
 			b.WriteString("\n\n")
 		}
+	}
+
+	if len(m.recentSessions) > 0 {
+		b.WriteString(helpStyle.Render("  recent drills"))
+		b.WriteString("\n")
+		for _, s := range m.recentSessions {
+			skillName := s.SkillID
+			if skill := skills.Get(s.SkillID); skill != nil {
+				skillName = skill.Name
+			}
+			b.WriteString(fmt.Sprintf("  %s  %-28s %s\n", ratingGlyph(s.Rating), truncateASCII(skillName, 28), formatDate(s.FinishedAt)))
+		}
+		b.WriteString("\n")
 	}
 
 	// Start prompt
@@ -790,6 +842,13 @@ func domainShort(domain string) string {
 
 func min(a, b int) int {
 	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
 		return a
 	}
 	return b
@@ -851,8 +910,8 @@ func pickRandomSkillFromDomain(domain string) *skills.Skill {
 	return candidates[rand.Intn(len(candidates))]
 }
 
-func (m Model) firstTimeDomainPickerEnabled() bool {
-	return m.allowDomainPicker && m.totalSessions == 0
+func (m Model) domainPickerEnabled() bool {
+	return m.allowDomainPicker
 }
 
 func (m Model) effectiveDomain() string {
@@ -863,4 +922,107 @@ func (m Model) effectiveDomain() string {
 		return ""
 	}
 	return m.skill.Domain
+}
+
+func (m Model) mainPanelWidth() int {
+	mainWidth := m.width - m.sidebarWidth() - 3
+	if mainWidth < 40 {
+		mainWidth = 40
+	}
+	return mainWidth
+}
+
+func (m Model) mainContentWidth() int {
+	mainWidth := m.mainPanelWidth() - 1
+	if mainWidth < 40 {
+		mainWidth = 40
+	}
+	return mainWidth
+}
+
+func (m *Model) syncLayout() {
+	contentWidth := m.mainContentWidth()
+	m.textarea.SetWidth(max(20, contentWidth-2))
+	m.viewport.Width = max(20, contentWidth)
+	m.viewport.Height = max(5, m.height-15)
+}
+
+func cycleDomainSelection(current string, delta int) string {
+	options := []string{
+		"data-structures",
+		"algorithm-patterns",
+		"system-design",
+		"leetcode-patterns",
+	}
+
+	idx := 0
+	for i, option := range options {
+		if option == current {
+			idx = i
+			break
+		}
+	}
+
+	next := (idx + delta + len(options)) % len(options)
+	return options[next]
+}
+
+func ratingGlyph(rating int) string {
+	color := "241"
+	switch rating {
+	case 1:
+		color = "210"
+	case 2:
+		color = "214"
+	case 3:
+		color = "114"
+	case 4:
+		color = "212"
+	}
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color(color)).
+		Bold(true).
+		Render("●")
+}
+
+func formatDate(s string) string {
+	if len(s) >= 10 {
+		return s[:10]
+	}
+	return s
+}
+
+func truncateASCII(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	if maxLen <= 3 {
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
+}
+
+func relativeTime(sqliteDateTime string) string {
+	t, err := time.Parse("2006-01-02 15:04:05", sqliteDateTime)
+	if err != nil {
+		return sqliteDateTime
+	}
+	d := time.Since(t)
+	if d < 0 {
+		d = 0
+	}
+	if d < time.Minute {
+		return "just now"
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%dm ago", int(d.Minutes()))
+	}
+	if d < 24*time.Hour {
+		return fmt.Sprintf("%dh ago", int(d.Hours()))
+	}
+	days := int(d.Hours() / 24)
+	if days == 1 {
+		return "1d ago"
+	}
+	return fmt.Sprintf("%dd ago", days)
 }

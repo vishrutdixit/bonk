@@ -1135,6 +1135,26 @@ func init() {
 		},
 	})
 
+	register(&Skill{
+		ID:          "messenger-chat-system",
+		Name:        "Messenger / Chat System",
+		Domain:      "system-design",
+		Description: "Real-time 1:1 messaging with presence, receipts, and multi-device sync",
+		Facets: []string{
+			"delivery semantics (at-least-once, deduplication, retries)",
+			"ordering (server sequence per conversation, shard ownership)",
+			"real-time presence and low-latency fan-out",
+			"multi-device synchronization (per-device cursors and reconciliation)",
+			"storage lifecycle (high write throughput, retention, compliance deletes)",
+		},
+		ExampleProblems: []string{
+			"Design WhatsApp/Facebook Messenger",
+			"Guarantee message ordering across flaky networks",
+			"Design presence and read receipts at scale",
+			"Build multi-device history sync with offline retry",
+		},
+	})
+
 	// LeetCode Patterns (Archetypes)
 	register(&Skill{
 		ID:          "cooldown-scheduling",
