@@ -1094,6 +1094,47 @@ func init() {
 		},
 	})
 
+	register(&Skill{
+		ID:          "ci-cd-systems",
+		Name:        "CI/CD Systems",
+		Domain:      "system-design",
+		Description: "Continuous integration and deployment workflow systems",
+		Facets: []string{
+			"event triggering (webhooks, polling, push events from VCS)",
+			"workflow orchestration (YAML parsing, job DAG, dependency resolution)",
+			"distributed execution (worker pools, containerized runners, resource isolation)",
+			"artifact management (build outputs, caching, storage)",
+			"real-time observability (log streaming, status updates, webhooks)",
+			"scalability (handling 10M+ repos, burst traffic, job queuing)",
+		},
+		ExampleProblems: []string{
+			"Design GitHub Actions from scratch",
+			"Design a CI pipeline for monorepo at scale",
+			"Design a self-hosted runner infrastructure",
+			"Design a build artifact caching system",
+		},
+	})
+
+	register(&Skill{
+		ID:          "online-chess-platform",
+		Name:        "Online Chess Platform",
+		Domain:      "system-design",
+		Description: "Low-latency multiplayer game system with real-time state sync",
+		Facets: []string{
+			"matchmaking (quick pairings, rating buckets, timeout handling)",
+			"real-time game loop (move submission, validation, turn enforcement)",
+			"state synchronization (WebSockets, ordered events, reconnect recovery)",
+			"consistency and fairness (clock handling, idempotent moves, anti-cheat checks)",
+			"persistence and analytics (game history, PGN/event logs, rating updates)",
+		},
+		ExampleProblems: []string{
+			"Design Chess.com/Lichess style live play",
+			"Handle reconnect during an in-progress game",
+			"Design rating updates after match completion",
+			"Scale real-time spectators for popular games",
+		},
+	})
+
 	// LeetCode Patterns (Archetypes)
 	register(&Skill{
 		ID:          "cooldown-scheduling",

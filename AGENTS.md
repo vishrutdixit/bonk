@@ -23,7 +23,6 @@ go build -o bin/bonk ./cmd/bonk
 ./bin/bonk lc
 ./bin/bonk --skill hash-maps
 ./bin/bonk list
-./bin/bonk stats
 ./bin/bonk serve
 go test ./...
 ```
@@ -36,7 +35,7 @@ go test ./...
 
 ## Architecture
 
-- `cmd/bonk/main.go`: CLI commands (`drill`, `list`, `stats`, `serve`) and skill selection.
+- `cmd/bonk/main.go`: CLI commands (`drill`, `list`, `info`, `serve`) and skill selection.
 - `internal/tui/tui.go`: Bubble Tea state machine and drill UX.
 - `internal/llm/client.go`: Anthropic client, prompt construction, response metadata parsing.
 - `internal/db/db.go`: SQLite schema, session/exchange persistence, SM-2 scheduling, stats queries.

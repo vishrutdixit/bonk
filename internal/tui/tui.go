@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -87,30 +88,35 @@ type Model struct {
 	conversation *llm.Conversation
 	sessionID    string
 
-	state          state
-	turn           int
-	maxTurns       int
-	lastResp       *llm.Response
-	history        []exchange
-	textarea       textarea.Model
-	viewport       viewport.Model
-	spinner        spinner.Model
-	width          int
-	height         int
-	err            error
-	quitting       bool
-	continueToNext bool
-	devMode        bool
-	showDebug      bool
-	historyCtx     string
-	difficulty     string
-	systemPrompt   string
-	llmRating      int // LLM's rating of user performance (1-4, 0 if not provided)
+	state             state
+	turn              int
+	maxTurns          int
+	lastResp          *llm.Response
+	history           []exchange
+	textarea          textarea.Model
+	viewport          viewport.Model
+	spinner           spinner.Model
+	width             int
+	height            int
+	err               error
+	quitting          bool
+	continueToNext    bool
+	devMode           bool
+	showDebug         bool
+	historyCtx        string
+	difficulty        string
+	systemPrompt      string
+	llmRating         int // LLM's rating of user performance (1-4, 0 if not provided)
+	selectedDomain    string
+	allowDomainPicker bool
 
 	// Welcome screen stats
 	totalSessions int
 	currentStreak int
 	dueCount      int
+	dueWeekCount  int
+	newSkillCount int
+	avgRating     float64
 	todayCount    int
 	recentRatings []int
 }
@@ -131,7 +137,7 @@ type sessionCreatedMsg struct {
 	err       error
 }
 
-func NewModel(database *db.DB, skill *skills.Skill, devMode bool) Model {
+func NewModel(database *db.DB, skill *skills.Skill, devMode bool, allowDomainPicker bool) Model {
 	ta := textarea.New()
 	ta.Placeholder = ""
 	ta.CharLimit = 2000
@@ -155,25 +161,32 @@ func NewModel(database *db.DB, skill *skills.Skill, devMode bool) Model {
 	totalSessions, _ := database.GetTotalSessions()
 	currentStreak, _, _ := database.GetStreak()
 	dueCount, _ := database.GetDueCount()
+	dueWeekCount, _ := database.GetDueThisWeek()
+	newSkillCount := len(database.GetNewSkills(skills.ListIDs()))
+	avgRating, _, _ := database.GetOverallAvgRating()
 	todayCount, _ := database.GetTodaySessionCount()
 	recentRatings, _ := database.GetRecentRatings(10)
 
 	return Model{
-		db:            database,
-		skill:         skill,
-		state:         stateWelcome,
-		turn:          0,
-		maxTurns:      10,
-		devMode:       devMode,
-		history:       []exchange{},
-		textarea:      ta,
-		viewport:      vp,
-		spinner:       sp,
-		totalSessions: totalSessions,
-		currentStreak: currentStreak,
-		dueCount:      dueCount,
-		todayCount:    todayCount,
-		recentRatings: recentRatings,
+		db:                database,
+		skill:             skill,
+		state:             stateWelcome,
+		turn:              0,
+		maxTurns:          10,
+		devMode:           devMode,
+		allowDomainPicker: allowDomainPicker,
+		history:           []exchange{},
+		textarea:          ta,
+		viewport:          vp,
+		spinner:           sp,
+		totalSessions:     totalSessions,
+		currentStreak:     currentStreak,
+		dueCount:          dueCount,
+		dueWeekCount:      dueWeekCount,
+		newSkillCount:     newSkillCount,
+		avgRating:         avgRating,
+		todayCount:        todayCount,
+		recentRatings:     recentRatings,
 	}
 }
 
@@ -198,6 +211,12 @@ func (m Model) getCoachResponse(userMsg string) tea.Cmd {
 }
 
 func (m *Model) startDrill() tea.Cmd {
+	if m.firstTimeDomainPickerEnabled() && m.selectedDomain != "" {
+		if s := pickRandomSkillFromDomain(m.selectedDomain); s != nil {
+			m.skill = s
+		}
+	}
+
 	// Initialize conversation
 	historyCtx, _ := m.db.GetHistoryContext(m.skill.ID, 5)
 
@@ -233,6 +252,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch m.state {
 		case stateWelcome:
+			if m.firstTimeDomainPickerEnabled() {
+				switch msg.String() {
+				case "1":
+					m.selectedDomain = "data-structures"
+					return m, nil
+				case "2":
+					m.selectedDomain = "algorithm-patterns"
+					return m, nil
+				case "3":
+					m.selectedDomain = "system-design"
+					return m, nil
+				case "4":
+					m.selectedDomain = "leetcode-patterns"
+					return m, nil
+				}
+			}
+
 			switch msg.String() {
 			case "enter", "s", " ":
 				return m, m.startDrill()
@@ -663,22 +699,46 @@ func (m Model) renderWelcome() string {
 
 	// Stats box
 	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
-	b.WriteString(statsStyle.Render(fmt.Sprintf("  sessions: %d", m.totalSessions)))
-	if m.currentStreak > 0 {
-		streakStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-		b.WriteString(streakStyle.Render(fmt.Sprintf("   streak: %d days", m.currentStreak)))
+	b.WriteString(statsStyle.Render(fmt.Sprintf("  sessions: %-5d avg: %-4s streak: %d days", m.totalSessions, formatRating(m.avgRating), m.currentStreak)))
+	b.WriteString("\n")
+	b.WriteString(statsStyle.Render(fmt.Sprintf("  due now: %-5d due week: %-5d new: %d", m.dueCount, m.dueWeekCount, m.newSkillCount)))
+	b.WriteString("\n")
+	if len(m.recentRatings) > 0 {
+		b.WriteString(statsStyle.Render("  recent: "))
+		b.WriteString(renderSparkline(m.recentRatings))
+		b.WriteString("\n")
 	}
-	if m.dueCount > 0 {
-		dueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("210"))
-		b.WriteString(dueStyle.Render(fmt.Sprintf("   due: %d", m.dueCount)))
-	}
-	b.WriteString("\n\n")
+	b.WriteString("\n")
 
-	// Domain hint
-	domainHint := domainShort(m.skill.Domain)
-	if domainHint != "" {
-		b.WriteString(domainStyle.Render(fmt.Sprintf("  next up: %s", domainHint)))
+	if m.firstTimeDomainPickerEnabled() {
+		b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("214")).Render("  First time setup: choose a domain"))
 		b.WriteString("\n\n")
+		options := []struct {
+			key    string
+			id     string
+			label  string
+			sample string
+		}{
+			{"1", "data-structures", "Data Structures", "ds"},
+			{"2", "algorithm-patterns", "Algorithm Patterns", "algo"},
+			{"3", "system-design", "System Design", "sys"},
+			{"4", "leetcode-patterns", "LeetCode Patterns", "lc"},
+		}
+		for _, opt := range options {
+			prefix := "  "
+			if m.selectedDomain == opt.id {
+				prefix = "→ "
+			}
+			b.WriteString(fmt.Sprintf("%s[%s] %-22s (%s)\n", prefix, opt.key, opt.label, opt.sample))
+		}
+		b.WriteString("\n")
+	} else {
+		// Domain hint
+		domainHint := domainShort(m.effectiveDomain())
+		if domainHint != "" {
+			b.WriteString(domainStyle.Render(fmt.Sprintf("  next up: %s", domainHint)))
+			b.WriteString("\n\n")
+		}
 	}
 
 	// Start prompt
@@ -739,6 +799,10 @@ func (m Model) ShouldContinue() bool {
 	return m.continueToNext
 }
 
+func (m Model) SelectedDomain() string {
+	return m.selectedDomain
+}
+
 func (m Model) Skill() *skills.Skill {
 	return m.skill
 }
@@ -770,4 +834,33 @@ func wordWrap(s string, width int) string {
 		}
 	}
 	return strings.TrimSuffix(result.String(), "\n")
+}
+
+func formatRating(r float64) string {
+	if r == 0 {
+		return "—"
+	}
+	return fmt.Sprintf("%.1f", r)
+}
+
+func pickRandomSkillFromDomain(domain string) *skills.Skill {
+	candidates := skills.ListByDomain(domain)
+	if len(candidates) == 0 {
+		return nil
+	}
+	return candidates[rand.Intn(len(candidates))]
+}
+
+func (m Model) firstTimeDomainPickerEnabled() bool {
+	return m.allowDomainPicker && m.totalSessions == 0
+}
+
+func (m Model) effectiveDomain() string {
+	if m.selectedDomain != "" {
+		return m.selectedDomain
+	}
+	if m.skill == nil {
+		return ""
+	}
+	return m.skill.Domain
 }

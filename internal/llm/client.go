@@ -103,6 +103,7 @@ func BuildSystemPrompt(skill *skills.Skill, historyContext string, perf *Perform
 
 	facets := strings.Join(skill.Facets, "\n- ")
 	problems := strings.Join(skill.ExampleProblems, "\n- ")
+	guide := skills.GetGuide(skill.ID)
 
 	historySection := ""
 	if historyContext != "" {
@@ -112,6 +113,16 @@ func BuildSystemPrompt(skill *skills.Skill, historyContext string, perf *Perform
 
 Use this to avoid repeating questions and to target weak areas.
 `, historyContext)
+	}
+
+	guideSection := ""
+	if guide != "" {
+		guideSection = fmt.Sprintf(`
+## Reference Guide
+%s
+
+Use this guide to inform your questioning and evaluation. Don't read it verbatim, but ensure you probe the key areas.
+`, guide)
 	}
 
 	difficultySection := ""
@@ -155,7 +166,7 @@ Description: %s
 
 ## Example problems that use this skill
 - %s
-%s%s
+%s%s%s
 ## Structure
 
 **Opening:** Ask ONE of these (randomly vary across sessions):
@@ -193,12 +204,13 @@ Where:
 - Always include the [meta: ...] line at the end of your response
 
 Start with your first question now.
-`, skill.Name, skill.Domain, skill.Description, facets, problems, historySection, difficultySection)
+`, skill.Name, skill.Domain, skill.Description, facets, problems, historySection, guideSection, difficultySection)
 }
 
 func buildLCPrompt(skill *skills.Skill, historyContext string, perf *PerformanceContext) string {
 	facets := strings.Join(skill.Facets, "\n- ")
 	problems := strings.Join(skill.ExampleProblems, "\n- ")
+	guide := skills.GetGuide(skill.ID)
 
 	historySection := ""
 	if historyContext != "" {
@@ -208,6 +220,16 @@ func buildLCPrompt(skill *skills.Skill, historyContext string, perf *Performance
 
 Use this to vary the problems you present and focus on areas they struggled with.
 `, historyContext)
+	}
+
+	guideSection := ""
+	if guide != "" {
+		guideSection = fmt.Sprintf(`
+## Reference Guide
+%s
+
+Use this guide to inform your questioning and evaluation.
+`, guide)
 	}
 
 	difficultySection := ""
@@ -241,7 +263,7 @@ Description: %s
 
 ## Example problems using this pattern
 - %s
-%s%s
+%s%s%s
 ## Coaching Approach
 
 **Opening:** Present a problem that uses this pattern. You can:
@@ -275,7 +297,7 @@ At the END of each response, add:
 Where rating is your assessment of their understanding (1=poor, 2=shaky, 3=solid, 4=excellent). Include on EVERY exchange.
 
 Start by presenting a problem now.
-`, skill.Name, skill.Description, facets, problems, historySection, difficultySection)
+`, skill.Name, skill.Description, facets, problems, historySection, guideSection, difficultySection)
 }
 
 var metaRegex = regexp.MustCompile(`\[meta:\s*facet=([^,]+),\s*type=([^,]+),\s*final=([^,\]]+)(?:,\s*rating=(\d))?\]`)
