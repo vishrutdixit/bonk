@@ -629,10 +629,10 @@ func llmRatingLabel(rating int) string {
 		text  string
 		color string
 	}{
-		1: {"Again", "210"},  // red
-		2: {"Hard", "214"},   // orange
-		3: {"Good", "114"},   // green
-		4: {"Easy", "212"},   // pink
+		1: {"Again", "210"}, // red
+		2: {"Hard", "214"},  // orange
+		3: {"Good", "114"},  // green
+		4: {"Easy", "212"},  // pink
 	}
 	if l, ok := labels[rating]; ok {
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(l.color)).Render(l.text)

@@ -6,7 +6,7 @@ ifdef API_KEY
 	LDFLAGS += -X bonk/internal/llm.embeddedAPIKey=$(API_KEY)
 endif
 
-.PHONY: build build-all clean
+.PHONY: build build-all clean fmt
 
 # Local build
 build:
@@ -25,3 +25,7 @@ build-all: clean
 clean:
 	rm -rf dist/
 	rm -f bin/bonk
+
+# Format code
+fmt:
+	gofmt -w cmd internal
