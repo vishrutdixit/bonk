@@ -54,15 +54,15 @@ go build -o bin/bonk ./cmd/bonk
 ## Common Commands
 
 ```bash
-./bin/bonk                 # Start drilling (recommended)
-./bin/bonk ds              # Data structures only
-./bin/bonk algo            # Algorithm patterns only
-./bin/bonk sys             # System design only
-./bin/bonk lc              # LeetCode patterns only
-./bin/bonk --skill hash-maps
-./bin/bonk list
-./bin/bonk info hash-maps
-./bin/bonk version
+bonk                       # Start drilling (recommended)
+bonk ds                    # Data structures only
+bonk algo                  # Algorithm patterns only
+bonk sys                   # System design only
+bonk lc                    # LeetCode patterns only
+bonk --skill hash-maps
+bonk list
+bonk info hash-maps
+bonk version
 ```
 
 ## Voice Mode
@@ -80,15 +80,11 @@ bonk --voice
 ## Mobile / Remote Drill
 
 ```bash
-# Install ttyd first
-brew install ttyd          # macOS
-apt install ttyd           # Linux
-
-./bin/bonk serve
-./bin/bonk serve --port 9000
+brew install ttyd
+bonk serve
 ```
 
-Open the printed network URL from your phone on the same WiFi.
+Open the printed URL from your phone on the same WiFi.
 
 ## Configuration
 
@@ -97,4 +93,8 @@ Open the printed network URL from your phone on the same WiFi.
 
 ## For Contributors
 
-See [CONTRIBUTING.md](/Users/vjd/dev/bonk/CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT

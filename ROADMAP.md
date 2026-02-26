@@ -24,141 +24,15 @@ Developer tooling for debugging and skill iteration.
 
 Status: Implemented (February 25, 2026) with `--dev` and in-session `S` debug panel.
 
-### Coverage Recovery Program (M-L)
+### Test Coverage (M-L)
 
-Fix CI coverage gate failures in controlled increments while keeping quality standards high.
+Incrementally improve test coverage across packages. Target 70% overall.
 
-Current problem:
-- CI enforces total coverage >= 70%
-- Current total coverage is ~6.3%
-- Most packages are at 0%, so this needs a staged program, not a one-off patch
-
-#### Phase 0: Unblock CI with ratcheting guardrails (S)
-
-Goal: keep quality pressure without freezing all development.
-
-- Story COV-00.1: Baseline coverage artifact
-  - Capture and store current total coverage as baseline in CI.
-  - Acceptance criteria:
-    - CI prints baseline and current coverage in logs.
-    - Build fails if coverage regresses below baseline by more than tolerance (e.g., 0.2%).
-
-- Story COV-00.2: Replace hard 70% gate with ratchet gate
-  - Enforce "no regression + incremental increase target" until overall target is reached.
-  - Acceptance criteria:
-    - CI fails on regressions.
-    - CI passes if coverage holds or improves.
-    - Rule is documented in CONTRIBUTING and CI output.
-
-- Story COV-00.3: Re-enable strict gate criteria once target reached
-  - Auto-switch or manual switch back to fixed >=70% when total reaches threshold.
-  - Acceptance criteria:
-    - CI configuration includes clear switch condition and final fixed threshold.
-
-#### Phase 1: Database coverage first (M)
-
-Goal: cover deterministic scheduling/stats logic for biggest ROI.
-
-- Story COV-01.1: DB test harness
-  - Add isolated test helper for temporary DB path and deterministic setup/teardown.
-  - Acceptance criteria:
-    - Tests do not touch user `~/.bonk/data.sqlite`.
-    - Tests are parallel-safe and hermetic.
-
-- Story COV-01.2: Session + SM-2 core tests
-  - Test `CreateSession`, `FinishSession`, interval updates, lapses, and cap at 365 days.
-  - Acceptance criteria:
-    - Rating paths 1-4 covered.
-    - Lapse/reset and success-growth behaviors asserted.
-
-- Story COV-01.3: Scheduling query tests
-  - Cover `GetDueSkills`, `GetDueCount`, `GetDueThisWeek`, `GetNewSkills`.
-  - Acceptance criteria:
-    - Edge cases validated (empty DB, all-new, all-due, mixed).
-
-- Story COV-01.4: Stats query tests
-  - Cover streaks, recent sessions/ratings, weak facets, averages.
-  - Acceptance criteria:
-    - Empty and populated-history behavior verified.
-    - Date-boundary logic (`today`, consecutive-day streak) asserted.
-
-Target: `internal/db` package >=75% coverage.
-
-#### Phase 2: LLM logic coverage (S-M)
-
-Goal: test pure logic and parsing without real network calls.
-
-- Story COV-02.1: Prompt builder tests
-  - Cover domain-specific prompt shaping and perf-context behavior.
-  - Acceptance criteria:
-    - Prompt metadata/structure expectations asserted.
-
-- Story COV-02.2: Response parser tests
-  - Cover valid metadata, missing metadata, malformed outputs.
-  - Acceptance criteria:
-    - Parser degrades gracefully and extracts rating/facet/question type where present.
-
-- Story COV-02.3: Env/model selection tests
-  - Cover API key/model env fallback behavior.
-  - Acceptance criteria:
-    - Defaults and overrides behave deterministically.
-
-Target: `internal/llm` package >=80% coverage (excluding live API call path).
-
-#### Phase 3: TUI deterministic coverage (M)
-
-Goal: cover non-IO-heavy logic and critical state transitions.
-
-- Story COV-03.1: Helper function tests
-  - Cover `wordWrap`, `relativeTime`, domain picker cycling, rating glyph/legend mapping.
-  - Acceptance criteria:
-    - Boundary and formatting edge cases covered.
-
-- Story COV-03.2: Welcome state transition tests
-  - Test picker controls (`1-4`, arrows, `j/k`, enter), domain selection persistence.
-  - Acceptance criteria:
-    - Expected state updates asserted with Bubble Tea key messages.
-
-- Story COV-03.3: Layout regression tests
-  - Cover width sync logic to prevent input wrap bugs with sidebar/debug toggles.
-  - Acceptance criteria:
-    - `syncLayout` behavior asserted for resize and debug sidebar states.
-
-Target: `internal/tui` package >=60% on deterministic functions.
-
-#### Phase 4: CLI + selection behavior (S-M)
-
-Goal: lock down user-facing selection policy.
-
-- Story COV-04.1: `selectSkill` tests
-  - Verify priority order due -> new -> random, with and without domain filters.
-  - Acceptance criteria:
-    - Deterministic tests with seeded/random-controlled data.
-
-- Story COV-04.2: Command surface smoke tests
-  - Validate key command wiring (`list`, `info`, drill arg parsing) without live LLM.
-  - Acceptance criteria:
-    - Basic command parsing and error paths covered.
-
-Target: `cmd/bonk` package >=50% coverage.
-
-#### Phase 5: Tighten policy and make it durable (S)
-
-- Story COV-05.1: Per-package minimums in CI
-  - Add package thresholds to prevent one high-coverage package hiding others.
-  - Acceptance criteria:
-    - CI reports pass/fail per package minimum.
-
-- Story COV-05.2: Coverage reporting UX
-  - Add PR-friendly summary (total delta + package deltas).
-  - Acceptance criteria:
-    - CI output clearly states what changed and why failures happened.
-
-- Story COV-05.3: Finalize fixed global threshold
-  - Return to global >=70% once suite stabilizes.
-  - Acceptance criteria:
-    - Ratchet mode removed or disabled.
-    - CONTRIBUTING docs updated with final rule.
+Priority order:
+1. `internal/db` — deterministic scheduling/stats logic (highest ROI)
+2. `internal/llm` — prompt building and response parsing (no live API calls)
+3. `internal/tui` — helper functions and state transitions
+4. `cmd/bonk` — skill selection and CLI parsing
 
 ## P1: High Priority
 
@@ -174,6 +48,8 @@ Use bonk from phone.
 - **Phase 3:** PWA — installable web app with offline support, push notifications for daily reminders.
 
 Start with ttyd for instant mobile access (same network). Add Tailscale detection later for remote access.
+
+Status: Phase 1 implemented (February 25, 2026). `bonk serve` wraps ttyd for web terminal access.
 
 ### LC Domain & Archetypes (M-L)
 
@@ -226,7 +102,7 @@ Practice explaining concepts out loud, mimicking real interviews. **Free with lo
 - **Flow:** Question spoken → user explains aloud → transcribed → sent to LLM → response spoken
 - **Modes:** `bonk --voice` for full voice I/O, or hybrid (voice questions, typed answers)
 
-Status: Implemented (February 26, 2026). TTS via macOS `say` at 280 wpm, STT via whisper.cpp (tiny model). Space to record, 's' to skip speech. Run `bonk setup` to install dependencies.
+Status: Implemented (February 26, 2026). TTS via macOS `say` at 280 wpm, STT via whisper.cpp (tiny model). Space to record, 's' to skip speech. Homebrew installs all dependencies automatically.
 
 ## P2: Medium Priority
 
@@ -322,6 +198,8 @@ Quick reference for skill details.
 
 - `bonk info <skill>` shows facets, example problems, description
 - `bonk info --all` dumps full skill catalog
+
+Status: Implemented.
 
 ### Export to Anki (M)
 
