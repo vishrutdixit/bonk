@@ -65,7 +65,8 @@ technical concepts like a Socratic coach.
 Domains:
   ds    - Data Structures (hash maps, trees, heaps, etc.)
   algo  - Algorithm Patterns (sliding window, binary search, etc.)
-  sys   - System Design (load balancing, caching, etc.)`,
+  sys   - System Design (load balancing, caching, etc.)
+  lc    - LeetCode Patterns (problem-solving archetypes)`,
 		Args: cobra.MaximumNArgs(1),
 		Run:  runDrill,
 	}
@@ -126,7 +127,7 @@ func runDrill(cmd *cobra.Command, args []string) {
 		// Domain filter specified
 		domain, ok := skills.DomainMap[args[0]]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys\n", args[0])
+			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys, lc\n", args[0])
 			os.Exit(1)
 		}
 		domainFilter = domain
@@ -173,7 +174,7 @@ func runList(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		domain, ok := skills.DomainMap[args[0]]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys\n", args[0])
+			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys, lc\n", args[0])
 			os.Exit(1)
 		}
 		domainFilter = domain

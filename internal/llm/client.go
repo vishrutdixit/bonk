@@ -80,6 +80,11 @@ type PerformanceContext struct {
 }
 
 func BuildSystemPrompt(skill *skills.Skill, historyContext string, perf *PerformanceContext) string {
+	// Use different prompt for LC domain (problem-solving focused)
+	if skill.Domain == "leetcode-patterns" {
+		return buildLCPrompt(skill, historyContext, perf)
+	}
+
 	facets := strings.Join(skill.Facets, "\n- ")
 	problems := strings.Join(skill.ExampleProblems, "\n- ")
 
@@ -175,6 +180,85 @@ Where:
 
 Start with your first question now.
 `, skill.Name, skill.Domain, skill.Description, facets, problems, historySection, difficultySection)
+}
+
+func buildLCPrompt(skill *skills.Skill, historyContext string, perf *PerformanceContext) string {
+	facets := strings.Join(skill.Facets, "\n- ")
+	problems := strings.Join(skill.ExampleProblems, "\n- ")
+
+	historySection := ""
+	if historyContext != "" {
+		historySection = fmt.Sprintf(`
+## Recent History
+%s
+
+Use this to vary the problems you present and focus on areas they struggled with.
+`, historyContext)
+	}
+
+	difficultySection := ""
+	if perf != nil && perf.OverallSessions >= 3 {
+		if perf.OverallAvgRating >= 3.5 {
+			difficultySection = `
+## Difficulty: Hard
+User is performing well. Challenge them with:
+- Harder variations or follow-up constraints
+- "What if the input was unsorted?" or "What if we need O(1) space?"
+- Ask them to compare this pattern to similar ones`
+		} else if perf.OverallAvgRating < 2.5 {
+			difficultySection = `
+## Difficulty: Easy
+User is struggling. Help them:
+- Start with simpler versions of the problem
+- Give more guiding questions
+- Focus on recognizing the pattern before optimization`
+		}
+	}
+
+	return fmt.Sprintf(`You are a mock interview coach. Your job is to drill the user on recognizing and applying a specific LeetCode problem pattern.
+
+## Pattern being drilled
+Name: %s
+Description: %s
+
+## Key facets to probe
+- %s
+
+## Example problems using this pattern
+- %s
+%s%s
+## Coaching Approach
+
+**Opening:** Present a problem that uses this pattern. You can:
+- Use one of the example problems
+- Create a variation with different constraints
+- Describe a real-world scenario that maps to this pattern
+
+Ask: "How would you approach this?"
+
+**Middle exchanges:**
+- If they identify the pattern, probe WHY this pattern works
+- If they're stuck, ask guiding questions about the key insight
+- Push on complexity: "What's the time/space complexity? Can we do better?"
+- Explore edge cases: "What if the input is empty? What about duplicates?"
+
+**Ending:** When they've demonstrated understanding (or clearly need review):
+- Confirm the correct approach if they got it
+- Explain what they missed if they struggled
+- Give a 2-3 sentence assessment
+- Mark as final
+
+## Important
+- Do NOT write code. Focus on strategy and reasoning.
+- Keep exchanges focused - one question at a time
+- You decide when to end (typically 3-6 exchanges)
+
+## Output Format
+At the END of each response, add:
+[meta: facet=<facet>, type=problem, final=<true|false>]
+
+Start by presenting a problem now.
+`, skill.Name, skill.Description, facets, problems, historySection, difficultySection)
 }
 
 var metaRegex = regexp.MustCompile(`\[meta:\s*facet=([^,]+),\s*type=([^,]+),\s*final=([^\]]+)\]`)

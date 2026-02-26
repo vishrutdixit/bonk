@@ -55,7 +55,7 @@ func ListIDsByDomain() map[string][]string {
 }
 
 func Domains() []string {
-	return []string{"data-structures", "algorithm-patterns", "system-design"}
+	return []string{"data-structures", "algorithm-patterns", "system-design", "leetcode-patterns"}
 }
 
 // Domain short names
@@ -68,6 +68,9 @@ var DomainMap = map[string]string{
 	"sys":                "system-design",
 	"system":             "system-design",
 	"system-design":      "system-design",
+	"lc":                 "leetcode-patterns",
+	"leetcode":           "leetcode-patterns",
+	"leetcode-patterns":  "leetcode-patterns",
 }
 
 func init() {
@@ -1088,6 +1091,245 @@ func init() {
 			"Design a metrics collection system",
 			"Design a distributed tracing system",
 			"Design an alerting system",
+		},
+	})
+
+	// LeetCode Patterns (Archetypes)
+	register(&Skill{
+		ID:          "cooldown-scheduling",
+		Name:        "Cooldown Scheduling",
+		Domain:      "leetcode-patterns",
+		Description: "Problems where items must be placed with minimum spacing constraints",
+		Facets: []string{
+			"recognition (spacing/cooldown constraint in problem)",
+			"why heap (need max frequency available item)",
+			"why queue (FIFO cooldown tracking)",
+			"greedy correctness (high frequency first avoids deadlock)",
+			"complexity analysis (O(n log k) where k is unique items)",
+		},
+		ExampleProblems: []string{
+			"Task Scheduler",
+			"Rearrange String K Distance Apart",
+			"Reorganize String",
+		},
+	})
+
+	register(&Skill{
+		ID:          "two-heaps-median",
+		Name:        "Two Heaps for Median",
+		Domain:      "leetcode-patterns",
+		Description: "Maintain running median using two heaps",
+		Facets: []string{
+			"recognition (need median of dynamic data)",
+			"structure (max-heap for lower half, min-heap for upper half)",
+			"balancing invariant (sizes differ by at most 1)",
+			"median retrieval (O(1) from heap tops)",
+			"insertion logic (which heap, then rebalance)",
+		},
+		ExampleProblems: []string{
+			"Find Median from Data Stream",
+			"Sliding Window Median",
+			"IPO (maximize capital)",
+		},
+	})
+
+	register(&Skill{
+		ID:          "monotonic-stack-optimization",
+		Name:        "Monotonic Stack Optimization",
+		Domain:      "leetcode-patterns",
+		Description: "Use stack to find next greater/smaller in O(n)",
+		Facets: []string{
+			"recognition (next greater/smaller element pattern)",
+			"stack invariant (monotonically increasing or decreasing)",
+			"what triggers pop (element breaks monotonic property)",
+			"what to compute on pop (width, area, span)",
+			"handling leftovers (elements remaining in stack)",
+		},
+		ExampleProblems: []string{
+			"Largest Rectangle in Histogram",
+			"Trapping Rain Water",
+			"Daily Temperatures",
+			"Next Greater Element",
+		},
+	})
+
+	register(&Skill{
+		ID:          "sliding-window-hash",
+		Name:        "Sliding Window + Hash Map",
+		Domain:      "leetcode-patterns",
+		Description: "Track window contents with hash map for O(1) lookups",
+		Facets: []string{
+			"recognition (substring/subarray with constraint)",
+			"window state (hash map tracking counts or positions)",
+			"expand condition (when to grow window)",
+			"shrink condition (when window violates constraint)",
+			"answer extraction (min/max window seen)",
+		},
+		ExampleProblems: []string{
+			"Minimum Window Substring",
+			"Longest Substring Without Repeating Characters",
+			"Longest Repeating Character Replacement",
+			"Permutation in String",
+		},
+	})
+
+	register(&Skill{
+		ID:          "bfs-complex-state",
+		Name:        "BFS with Complex State",
+		Domain:      "leetcode-patterns",
+		Description: "BFS where state includes more than just position",
+		Facets: []string{
+			"recognition (shortest path with additional constraints)",
+			"state definition (position + extra info like keys, steps, fuel)",
+			"visited tracking (must track full state, not just position)",
+			"state encoding (tuple, string, or bit manipulation)",
+			"pruning opportunities (avoid redundant states)",
+		},
+		ExampleProblems: []string{
+			"Open the Lock",
+			"Word Ladder",
+			"Shortest Path with Obstacles Elimination",
+			"Shortest Path to Get All Keys",
+		},
+	})
+
+	register(&Skill{
+		ID:          "dp-on-intervals",
+		Name:        "DP on Intervals",
+		Domain:      "leetcode-patterns",
+		Description: "DP where state is an interval [i,j]",
+		Facets: []string{
+			"recognition (optimal substructure on contiguous ranges)",
+			"state definition (dp[i][j] = optimal for interval [i,j])",
+			"transition (try all split points k in [i,j])",
+			"iteration order (by interval length, small to large)",
+			"base cases (single element or empty intervals)",
+		},
+		ExampleProblems: []string{
+			"Burst Balloons",
+			"Matrix Chain Multiplication",
+			"Minimum Cost to Merge Stones",
+			"Strange Printer",
+		},
+	})
+
+	register(&Skill{
+		ID:          "binary-search-on-answer",
+		Name:        "Binary Search on Answer",
+		Domain:      "leetcode-patterns",
+		Description: "Binary search over possible answer values",
+		Facets: []string{
+			"recognition (minimize maximum or maximize minimum)",
+			"monotonicity (if answer X works, X+1 also works, or vice versa)",
+			"predicate function (can we achieve this answer?)",
+			"search space bounds (min and max possible answers)",
+			"answer extraction (first/last valid value)",
+		},
+		ExampleProblems: []string{
+			"Koko Eating Bananas",
+			"Split Array Largest Sum",
+			"Capacity To Ship Packages",
+			"Minimize Max Distance to Gas Station",
+		},
+	})
+
+	register(&Skill{
+		ID:          "topological-ordering",
+		Name:        "Topological Order Applications",
+		Domain:      "leetcode-patterns",
+		Description: "Use topological sort for dependency resolution",
+		Facets: []string{
+			"recognition (dependencies, prerequisites, ordering constraints)",
+			"cycle detection (impossible if cycle exists)",
+			"Kahn's algorithm (BFS with indegree tracking)",
+			"multiple valid orderings (lexicographically smallest)",
+			"counting orderings (DP on topological order)",
+		},
+		ExampleProblems: []string{
+			"Course Schedule I & II",
+			"Alien Dictionary",
+			"Sequence Reconstruction",
+			"Parallel Courses",
+		},
+	})
+
+	register(&Skill{
+		ID:          "union-find-patterns",
+		Name:        "Union-Find Patterns",
+		Domain:      "leetcode-patterns",
+		Description: "Dynamic connectivity and component tracking",
+		Facets: []string{
+			"recognition (grouping, connectivity, equivalence)",
+			"path compression (find optimization)",
+			"union by rank/size (union optimization)",
+			"component tracking (count, size, or properties)",
+			"online vs offline (process queries in order vs sort first)",
+		},
+		ExampleProblems: []string{
+			"Accounts Merge",
+			"Redundant Connection",
+			"Number of Islands II",
+			"Smallest String With Swaps",
+		},
+	})
+
+	register(&Skill{
+		ID:          "tree-path-problems",
+		Name:        "Tree Path Problems",
+		Domain:      "leetcode-patterns",
+		Description: "Problems involving paths in trees",
+		Facets: []string{
+			"recognition (path sum, diameter, LCA)",
+			"path types (root-to-leaf vs any-to-any)",
+			"DFS state (what to pass down vs return up)",
+			"combining child results (max path through node)",
+			"global vs local answer (update global during DFS)",
+		},
+		ExampleProblems: []string{
+			"Binary Tree Maximum Path Sum",
+			"Path Sum III",
+			"Diameter of Binary Tree",
+			"Longest Univalue Path",
+		},
+	})
+
+	register(&Skill{
+		ID:          "prefix-sum-tricks",
+		Name:        "Prefix Sum Tricks",
+		Domain:      "leetcode-patterns",
+		Description: "Prefix sums with hash map for subarray queries",
+		Facets: []string{
+			"recognition (subarray sum equals target)",
+			"prefix sum + hash map (count subarrays with sum K)",
+			"modular arithmetic (divisibility conditions)",
+			"prefix XOR (subarray XOR problems)",
+			"2D prefix sums (matrix region queries)",
+		},
+		ExampleProblems: []string{
+			"Subarray Sum Equals K",
+			"Contiguous Array",
+			"Subarray Sums Divisible by K",
+			"Find Pivot Index",
+		},
+	})
+
+	register(&Skill{
+		ID:          "greedy-intervals",
+		Name:        "Greedy Interval Scheduling",
+		Domain:      "leetcode-patterns",
+		Description: "Greedy algorithms on intervals",
+		Facets: []string{
+			"recognition (intervals with selection/removal)",
+			"sorting strategy (by start, end, or both)",
+			"greedy choice (earliest end time, or latest start)",
+			"proof technique (exchange argument)",
+			"heap for tracking (overlapping intervals count)",
+		},
+		ExampleProblems: []string{
+			"Non-overlapping Intervals",
+			"Meeting Rooms II",
+			"Minimum Number of Arrows",
+			"Insert Interval",
 		},
 	})
 }
