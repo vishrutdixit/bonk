@@ -11,11 +11,9 @@
 
 `bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules reviews with SM-2 so you revisit skills at the right time.
 
-## Demo
-
 <p align="center">
-  <img src="assets/welcome.png" width="45%" alt="Welcome screen">
-  <img src="assets/question.png" width="45%" alt="Drill session">
+  <img src="assets/welcome.png" height="250" alt="Welcome screen">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="assets/question.png" height="250" alt="Drill session">
 </p>
 
 ## Installation
