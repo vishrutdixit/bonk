@@ -11,6 +11,8 @@ Thanks for contributing to `bonk`.
 ## Build, Run, Test
 
 ```bash
+make install-hooks
+
 go build -o bin/bonk ./cmd/bonk
 
 ./bin/bonk
@@ -25,6 +27,10 @@ go build -o bin/bonk ./cmd/bonk
 
 go test ./...
 ```
+
+Notes:
+- `make install-hooks` sets `core.hooksPath` to `.githooks`.
+- Pre-commit hook runs `gofmt -w cmd internal` and `go test ./...`.
 
 ## Environment
 

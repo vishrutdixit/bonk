@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-commit] formatting Go files..."
+gofmt -w cmd internal
+
+# Re-stage tracked Go files after formatting.
+git add cmd internal
+
+echo "[pre-commit] running tests..."
+go test ./...
+
+echo "[pre-commit] checks passed."

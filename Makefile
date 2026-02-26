@@ -6,7 +6,7 @@ ifdef API_KEY
 	LDFLAGS += -X bonk/internal/llm.embeddedAPIKey=$(API_KEY)
 endif
 
-.PHONY: build build-all clean fmt release-tag
+.PHONY: build build-all clean fmt test pre-commit install-hooks release-tag
 
 # Local build
 build:
@@ -29,6 +29,19 @@ clean:
 # Format code
 fmt:
 	gofmt -w cmd internal
+
+# Run test suite
+test:
+	go test ./...
+
+# Local pre-commit checks (same as hook)
+pre-commit: fmt test
+
+# Configure repo-managed git hooks
+install-hooks:
+	git config core.hooksPath .githooks
+	chmod +x .githooks/pre-commit
+	@echo "Installed git hooks from .githooks/"
 
 # Create and push a release tag (triggers GitHub release workflow)
 # Usage: make release-tag RELEASE_VERSION=v0.2.0
