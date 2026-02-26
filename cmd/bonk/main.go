@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -118,6 +121,20 @@ Examples:
 		},
 	}
 	rootCmd.AddCommand(versionCmd)
+
+	// Setup command for voice mode dependencies
+	setupCmd := &cobra.Command{
+		Use:   "setup",
+		Short: "Set up voice mode dependencies (macOS)",
+		Long: `Install dependencies for voice mode:
+  - sox (audio recording)
+  - whisper-cpp (speech-to-text)
+  - whisper model file
+
+Requires Homebrew on macOS.`,
+		Run: runSetup,
+	}
+	rootCmd.AddCommand(setupCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -305,4 +322,76 @@ func printSkillInfo(s *skills.Skill) {
 		}
 		fmt.Println()
 	}
+}
+
+func runSetup(cmd *cobra.Command, args []string) {
+	if runtime.GOOS != "darwin" {
+		fmt.Println("Voice mode is currently only supported on macOS.")
+		fmt.Println("TTS uses the 'say' command and STT uses whisper.cpp.")
+		return
+	}
+
+	fmt.Println("Setting up voice mode for bonk...")
+	fmt.Println()
+
+	// Check for Homebrew
+	if _, err := exec.LookPath("brew"); err != nil {
+		fmt.Println("✗ Homebrew not found")
+		fmt.Println("  Install from: https://brew.sh")
+		os.Exit(1)
+	}
+	fmt.Println("✓ Homebrew found")
+
+	// Check/install sox
+	if _, err := exec.LookPath("sox"); err != nil {
+		fmt.Println("  Installing sox...")
+		installCmd := exec.Command("brew", "install", "sox")
+		installCmd.Stdout = os.Stdout
+		installCmd.Stderr = os.Stderr
+		if err := installCmd.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "✗ Failed to install sox: %v\n", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Println("✓ sox installed")
+
+	// Check/install whisper-cpp
+	if _, err := exec.LookPath("whisper-cli"); err != nil {
+		fmt.Println("  Installing whisper-cpp...")
+		installCmd := exec.Command("brew", "install", "whisper-cpp")
+		installCmd.Stdout = os.Stdout
+		installCmd.Stderr = os.Stderr
+		if err := installCmd.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "✗ Failed to install whisper-cpp: %v\n", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Println("✓ whisper-cpp installed")
+
+	// Download whisper model
+	homeDir, _ := os.UserHomeDir()
+	bonkDir := filepath.Join(homeDir, ".bonk")
+	modelPath := filepath.Join(bonkDir, "ggml-tiny.en.bin")
+
+	if err := os.MkdirAll(bonkDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "✗ Failed to create ~/.bonk directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
+		fmt.Println("  Downloading whisper model (tiny.en, ~39MB)...")
+		curlCmd := exec.Command("curl", "-sSL",
+			"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin",
+			"-o", modelPath)
+		curlCmd.Stdout = os.Stdout
+		curlCmd.Stderr = os.Stderr
+		if err := curlCmd.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "✗ Failed to download model: %v\n", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Println("✓ Whisper model ready")
+
+	fmt.Println("\nVoice mode setup complete!")
+	fmt.Println("Run: bonk --voice")
 }
