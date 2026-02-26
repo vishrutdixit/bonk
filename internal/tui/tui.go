@@ -182,7 +182,7 @@ func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool) Mode
 		state:             stateWelcome,
 		turn:              0,
 		maxTurns:          10,
-		showDebug:         true,
+		showDebug:         false,
 		allowDomainPicker: allowDomainPicker,
 		history:           []exchange{},
 		textarea:          ta,
