@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
+	"bonk/internal/buildinfo"
 	"bonk/internal/db"
 	"bonk/internal/serve"
 	"bonk/internal/skills"
@@ -71,6 +72,7 @@ Domains:
 		Args: cobra.MaximumNArgs(1),
 		Run:  runDrill,
 	}
+	rootCmd.Version = buildinfo.Version
 
 	rootCmd.Flags().String("skill", "", "Specific skill ID to drill")
 
@@ -106,6 +108,15 @@ Examples:
 	}
 	infoCmd.Flags().Bool("all", false, "Show all skills with full details")
 	rootCmd.AddCommand(infoCmd)
+
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Show bonk version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(buildinfo.Summary())
+		},
+	}
+	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

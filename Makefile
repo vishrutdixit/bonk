@@ -1,7 +1,12 @@
 # Bonk build configuration
-VERSION ?= 0.2.0
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 API_KEY ?=
-LDFLAGS := -s -w
+LDFLAGS := -s -w \
+	-X bonk/internal/buildinfo.Version=$(VERSION) \
+	-X bonk/internal/buildinfo.Commit=$(COMMIT) \
+	-X bonk/internal/buildinfo.Date=$(BUILD_DATE)
 ifdef API_KEY
 	LDFLAGS += -X bonk/internal/llm.embeddedAPIKey=$(API_KEY)
 endif

@@ -39,10 +39,14 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
           out="bonk-${GOOS}-${GOARCH}"
-          go build -trimpath -ldflags "-s -w" -o "dist/${out}" ./cmd/bonk
+          short_commit="$(printf '%s' "$COMMIT" | cut -c1-7)"
+          build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          go build -trimpath -ldflags "-s -w -X bonk/internal/buildinfo.Version=${VERSION} -X bonk/internal/buildinfo.Commit=${short_commit} -X bonk/internal/buildinfo.Date=${build_date}" -o "dist/${out}" ./cmd/bonk
           tar -C dist -czf "dist/${out}.tar.gz" "${out}"
 
       - name: Upload release artifact
