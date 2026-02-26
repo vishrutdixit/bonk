@@ -1,49 +1,66 @@
 # bonk
 
-LLM-powered spaced repetition for technical skills. Socratic drilling with SM-2 scheduling.
+Socratic interview drills with spaced repetition.
+
+`bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules review with SM-2 so you revisit skills at the right time.
 
 ## Install
 
 ```bash
 go build -o bin/bonk ./cmd/bonk
-# Optional: add bin/ to PATH or copy to ~/bin
 ```
 
-## Run
+Set your API key:
 
 ```bash
-./bin/bonk           # Drill (prioritizes due → new → random)
-./bin/bonk --dev     # Drill with dev debug panel (press S in-session)
-./bin/bonk ds        # Data structures only
-./bin/bonk algo      # Algorithm patterns only
-./bin/bonk sys       # System design only
-./bin/bonk lc        # LeetCode patterns only
-./bin/bonk --skill X # Specific skill
-./bin/bonk list      # List all skills
-./bin/bonk info X    # Show skill details
+export ANTHROPIC_API_KEY=your_key_here
 ```
 
-`bonk` welcome screen now shows progress stats (sessions, due counts, streak, recent ratings).
+Then run:
 
-## Mobile Access
+```bash
+./bin/bonk
+```
 
-Drill from your phone using web terminal:
+## Why bonk
+
+- Conversation-first practice instead of flashcard memorization
+- Smart next-skill selection: due -> new -> random
+- Built-in progress signal on the welcome screen
+- Local persistence in SQLite (`~/.bonk/data.sqlite`)
+
+## Common Commands
+
+```bash
+./bin/bonk                 # Start drilling (recommended)
+./bin/bonk ds              # Data structures only
+./bin/bonk algo            # Algorithm patterns only
+./bin/bonk sys             # System design only
+./bin/bonk lc              # LeetCode patterns only
+./bin/bonk --skill hash-maps
+./bin/bonk list
+./bin/bonk info hash-maps
+./bin/bonk --dev           # Debug panel (press S in-session)
+```
+
+## Mobile / Remote Drill
 
 ```bash
 # Install ttyd first
-brew install ttyd  # macOS
-apt install ttyd   # Linux
+brew install ttyd          # macOS
+apt install ttyd           # Linux
 
-# Start web terminal
-./bin/bonk serve              # http://localhost:8080
-./bin/bonk serve --port 9000  # Custom port
+./bin/bonk serve
+./bin/bonk serve --port 9000
 ```
 
-Open the "Network" URL from your phone (same WiFi network).
+Open the printed network URL from your phone on the same WiFi.
 
-## Config
+## Configuration
 
-State: `~/.bonk/data.sqlite`
+- `ANTHROPIC_API_KEY` (required)
+- `BONK_MODEL` (optional, defaults to `claude-sonnet-4-20250514`)
 
-- `ANTHROPIC_API_KEY` (required for drills)
-- `BONK_MODEL` (optional, default: claude-sonnet-4-20250514)
+## For Contributors
+
+See [CONTRIBUTING.md](/Users/vjd/dev/bonk/CONTRIBUTING.md).
