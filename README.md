@@ -27,26 +27,23 @@ Suggested paths:
 
 ## Installation
 
-Quick install:
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vishrutdixit/bonk/main/install.sh | bash
-```
-
-Manual build:
-
-```bash
-go build -o bin/bonk ./cmd/bonk
+brew tap vishrutdixit/tap
+brew install bonk
 ```
 
 Set your API key and run:
 
 ```bash
 export ANTHROPIC_API_KEY=your_key_here
-./bin/bonk
+bonk
 ```
 
-Homebrew: coming soon.
+Build from source:
+
+```bash
+go build -o bin/bonk ./cmd/bonk
+```
 
 ## Why Bonk
 
@@ -67,6 +64,18 @@ Homebrew: coming soon.
 ./bin/bonk info hash-maps
 ./bin/bonk version
 ```
+
+## Voice Mode
+
+Practice explaining concepts out loud (macOS only):
+
+```bash
+bonk --voice
+```
+
+- Coach questions are spoken aloud
+- Press `space` to record your answer
+- Press `s` to skip speech
 
 ## Mobile / Remote Drill
 
