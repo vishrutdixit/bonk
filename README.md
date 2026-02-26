@@ -50,10 +50,9 @@ Homebrew: coming soon.
 
 ## Why Bonk
 
+- Infinite, self-improving deck of concepts to drill
 - Conversation-first practice instead of flashcard memorization
 - Smart next-skill selection: due -> new -> random
-- Built-in progress signal on the welcome screen
-- Local persistence in SQLite (`~/.bonk/data.sqlite`)
 
 ## Common Commands
 
