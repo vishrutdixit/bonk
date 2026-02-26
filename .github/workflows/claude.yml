@@ -9,6 +9,7 @@ on:
 
 permissions:
   id-token: write
+  actions: read
   contents: write
   pull-requests: write
   issues: write
@@ -23,12 +24,28 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout PR head (issue_comment)
+        if: github.event_name == 'issue_comment'
         uses: actions/checkout@v4
         with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 0
+
+      - name: Checkout PR head (review comment)
+        if: github.event_name == 'pull_request_review_comment'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Verify git workspace
+        run: |
+          pwd
+          git rev-parse --is-inside-work-tree
+          git status --short
 
       - name: Run Claude Code Action
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}

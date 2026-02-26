@@ -20,8 +20,10 @@ go build -o bin/bonk ./cmd/bonk
 ./bin/bonk lc        # LeetCode patterns only
 ./bin/bonk --skill X # Specific skill
 ./bin/bonk list      # List all skills
-./bin/bonk stats     # Show progress
+./bin/bonk info X    # Show skill details
 ```
+
+`bonk` welcome screen now shows progress stats (sessions, due counts, streak, recent ratings).
 
 ## Mobile Access
 
