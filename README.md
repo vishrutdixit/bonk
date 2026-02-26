@@ -1,28 +1,30 @@
-# bonk
+<h1 align="center">bonk</h1>
 
-Socratic interview drills with spaced repetition.
+<p align="center"><strong>Socratic interview drills with spaced repetition</strong></p>
 
-`bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules review with SM-2 so you revisit skills at the right time.
+<p align="center">
+  <a href="https://github.com/vishrutdixit/bonk/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/vishrutdixit/bonk/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://go.dev/"><img alt="Go Version" src="https://img.shields.io/badge/go-1.25.5-00ADD8?logo=go"></a>
+  <a href="https://github.com/vishrutdixit/bonk/releases"><img alt="Latest Release" src="https://img.shields.io/github/v/release/vishrutdixit/bonk"></a>
+  <a href="https://github.com/vishrutdixit/bonk/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/vishrutdixit/bonk?style=social"></a>
+</p>
 
-## Install
+`bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules reviews with SM-2 so you revisit skills at the right time.
+
+## Installation
 
 ```bash
 go build -o bin/bonk ./cmd/bonk
 ```
 
-Set your API key:
+Set your API key and run:
 
 ```bash
 export ANTHROPIC_API_KEY=your_key_here
-```
-
-Then run:
-
-```bash
 ./bin/bonk
 ```
 
-## Why bonk
+## Why Bonk
 
 - Conversation-first practice instead of flashcard memorization
 - Smart next-skill selection: due -> new -> random
