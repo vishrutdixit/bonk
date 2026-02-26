@@ -12,7 +12,7 @@ GitHub Actions for automated builds and releases.
 - Release automation: tag → build binaries (darwin/linux, amd64/arm64) → GitHub release
 - Claude PR reviews via GitHub integration (optional: auto-review, or @mention to trigger)
 
-Status: Phase 1 implemented (February 25, 2026): CI workflow runs formatting check, tests, and build on push/PR.
+Status: Phase 2 implemented (February 25, 2026): CI runs formatting/test/build on push/PR, and release workflow publishes darwin/linux binaries on version tags. Claude PR reviews remain optional/pending integration.
 
 ### Dev Mode (S)
 
