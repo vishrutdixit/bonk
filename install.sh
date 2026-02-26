@@ -71,3 +71,5 @@ fi
 
 echo ""
 echo "Run 'bonk' to start drilling!"
+echo ""
+echo "For voice mode (macOS): bonk setup"

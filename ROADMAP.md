@@ -226,7 +226,7 @@ Practice explaining concepts out loud, mimicking real interviews. **Free with lo
 - **Flow:** Question spoken → user explains aloud → transcribed → sent to LLM → response spoken
 - **Modes:** `bonk --voice` for full voice I/O, or hybrid (voice questions, typed answers)
 
-Start with TTS-only (`say` on macOS), add STT via whisper.cpp later.
+Status: Implemented (February 26, 2026). TTS via macOS `say` at 280 wpm, STT via whisper.cpp (tiny model). Space to record, 's' to skip speech. Run `bonk setup` to install dependencies.
 
 ## P2: Medium Priority
 
