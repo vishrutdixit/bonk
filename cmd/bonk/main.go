@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -99,6 +100,21 @@ Domains:
 	}
 	serveCmd.Flags().StringP("port", "p", "8080", "Port to listen on")
 	rootCmd.AddCommand(serveCmd)
+
+	// Info command
+	infoCmd := &cobra.Command{
+		Use:   "info [skill]",
+		Short: "Show skill details (facets, example problems)",
+		Long: `Show detailed information about a skill including its facets and example problems.
+
+Examples:
+  bonk info hash-maps     Show details for hash-maps skill
+  bonk info --all         List all skills with full details`,
+		Args: cobra.MaximumNArgs(1),
+		Run:  runInfo,
+	}
+	infoCmd.Flags().Bool("all", false, "Show all skills with full details")
+	rootCmd.AddCommand(infoCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -365,5 +381,65 @@ func runServe(cmd *cobra.Command, args []string) {
 	if err := serve.Run(port); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+func runInfo(cmd *cobra.Command, args []string) {
+	showAll, _ := cmd.Flags().GetBool("all")
+
+	if showAll {
+		// Show all skills with full details
+		for _, domain := range skills.Domains() {
+			domainSkills := skills.ListByDomain(domain)
+			if len(domainSkills) == 0 {
+				continue
+			}
+			fmt.Printf("\n[%s]\n", domain)
+			fmt.Println(strings.Repeat("─", 60))
+			for _, s := range domainSkills {
+				printSkillInfo(s)
+			}
+		}
+		return
+	}
+
+	if len(args) == 0 {
+		fmt.Fprintf(os.Stderr, "Usage: bonk info <skill> or bonk info --all\n")
+		fmt.Fprintf(os.Stderr, "Use 'bonk list' to see available skills\n")
+		os.Exit(1)
+	}
+
+	skill := skills.Get(args[0])
+	if skill == nil {
+		fmt.Fprintf(os.Stderr, "Unknown skill: %s\n", args[0])
+		fmt.Fprintf(os.Stderr, "Use 'bonk list' to see available skills\n")
+		os.Exit(1)
+	}
+
+	fmt.Println()
+	printSkillInfo(skill)
+}
+
+func printSkillInfo(s *skills.Skill) {
+	fmt.Printf("%-20s %s\n", "Skill:", s.Name)
+	fmt.Printf("%-20s %s\n", "ID:", s.ID)
+	fmt.Printf("%-20s %s\n", "Domain:", s.Domain)
+	fmt.Printf("%-20s %s\n", "Description:", s.Description)
+	fmt.Println()
+
+	if len(s.Facets) > 0 {
+		fmt.Println("Facets:")
+		for _, f := range s.Facets {
+			fmt.Printf("  • %s\n", f)
+		}
+		fmt.Println()
+	}
+
+	if len(s.ExampleProblems) > 0 {
+		fmt.Println("Example Problems:")
+		for _, p := range s.ExampleProblems {
+			fmt.Printf("  • %s\n", p)
+		}
+		fmt.Println()
 	}
 }
