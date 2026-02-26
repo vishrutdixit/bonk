@@ -13,17 +13,10 @@
 
 ## Demo
 
-TODO: add terminal demo GIF and video.
-
-<!--
-When assets are ready, replace this block with:
-
-[![bonk demo](dist/demo/bonk-demo.gif)](dist/demo/bonk-demo.mp4)
-
-Suggested paths:
-- GIF: dist/demo/bonk-demo.gif
-- MP4: dist/demo/bonk-demo.mp4
--->
+<p align="center">
+  <img src="assets/welcome.png" width="45%" alt="Welcome screen">
+  <img src="assets/question.png" width="45%" alt="Drill session">
+</p>
 
 ## Installation
 
