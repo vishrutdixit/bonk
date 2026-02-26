@@ -454,10 +454,30 @@ func (m Model) View() string {
 
 	switch m.state {
 	case stateWelcome:
-		return m.renderWelcome()
+		return m.renderWelcomeCentered()
 	default:
 		return m.renderWithSidebar()
 	}
+}
+
+func (m Model) renderWelcomeCentered() string {
+	content := m.renderWelcome()
+	if m.width <= 0 || m.height <= 0 {
+		return content
+	}
+	blockWidth := lipgloss.Width(content)
+	if blockWidth <= 0 {
+		return content
+	}
+	// Keep internal text left-aligned, but move the entire welcome panel as one unit.
+	block := lipgloss.NewStyle().Width(blockWidth).Align(lipgloss.Left).Render(content)
+	return lipgloss.Place(
+		m.width,
+		m.height,
+		lipgloss.Center,
+		lipgloss.Center,
+		block,
+	)
 }
 
 func (m Model) renderWithSidebar() string {
