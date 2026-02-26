@@ -27,6 +27,14 @@ Suggested paths:
 
 ## Installation
 
+Quick install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vishrutdixit/bonk/main/install.sh | bash
+```
+
+Manual build:
+
 ```bash
 go build -o bin/bonk ./cmd/bonk
 ```
@@ -37,6 +45,8 @@ Set your API key and run:
 export ANTHROPIC_API_KEY=your_key_here
 ./bin/bonk
 ```
+
+Homebrew: coming soon.
 
 ## Why Bonk
 
