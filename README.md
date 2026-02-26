@@ -11,6 +11,20 @@
 
 `bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules reviews with SM-2 so you revisit skills at the right time.
 
+## Demo
+
+TODO: add terminal demo GIF and video.
+
+<!--
+When assets are ready, replace this block with:
+
+[![bonk demo](dist/demo/bonk-demo.gif)](dist/demo/bonk-demo.mp4)
+
+Suggested paths:
+- GIF: dist/demo/bonk-demo.gif
+- MP4: dist/demo/bonk-demo.mp4
+-->
+
 ## Installation
 
 ```bash
