@@ -48,6 +48,11 @@ func getEnvOrDefault(key, defaultVal string) string {
 	return defaultVal
 }
 
+// IsConfigured reports whether an API key is available.
+func IsConfigured() bool {
+	return apiKey != ""
+}
+
 type Response struct {
 	Text         string
 	Facet        string

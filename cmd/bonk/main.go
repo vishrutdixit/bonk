@@ -11,6 +11,7 @@ import (
 
 	"bonk/internal/buildinfo"
 	"bonk/internal/db"
+	"bonk/internal/llm"
 	"bonk/internal/serve"
 	"bonk/internal/skills"
 	"bonk/internal/tui"
@@ -124,6 +125,14 @@ Examples:
 }
 
 func runDrill(cmd *cobra.Command, args []string) {
+	if !llm.IsConfigured() {
+		fmt.Fprintln(os.Stderr, "Error: ANTHROPIC_API_KEY is not set.")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Set your API key and run again:")
+		fmt.Fprintln(os.Stderr, "  export ANTHROPIC_API_KEY=sk-ant-...")
+		os.Exit(1)
+	}
+
 	database, err := db.Open()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error opening database: %v\n", err)

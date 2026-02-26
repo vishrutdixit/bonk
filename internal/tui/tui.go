@@ -260,6 +260,14 @@ func (m *Model) startDrill() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
+	// When an error is set, any keypress exits.
+	if m.err != nil {
+		if _, ok := msg.(tea.KeyMsg); ok {
+			return m, tea.Quit
+		}
+		return m, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch m.state {
@@ -417,14 +425,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case sessionCreatedMsg:
 		if msg.err != nil {
 			m.err = msg.err
-			return m, tea.Quit
+			return m, nil
 		}
 		m.sessionID = msg.sessionID
 
 	case coachResponseMsg:
 		if msg.err != nil {
 			m.err = msg.err
-			return m, tea.Quit
+			return m, nil
 		}
 		m.lastResp = msg.resp
 		m.turn++
@@ -965,12 +973,20 @@ func cycleDomainSelection(current string, delta int) string {
 		"leetcode-patterns",
 	}
 
-	idx := 0
+	idx := -1
 	for i, option := range options {
 		if option == current {
 			idx = i
 			break
 		}
+	}
+
+	if idx == -1 {
+		// Nothing selected: Down→first, Up→last.
+		if delta > 0 {
+			return options[0]
+		}
+		return options[len(options)-1]
 	}
 
 	next := (idx + delta + len(options)) % len(options)
