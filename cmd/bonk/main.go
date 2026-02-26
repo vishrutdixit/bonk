@@ -75,6 +75,7 @@ Domains:
 	rootCmd.Version = buildinfo.Version
 
 	rootCmd.Flags().String("skill", "", "Specific skill ID to drill")
+	rootCmd.Flags().BoolP("voice", "v", false, "Enable voice mode (TTS for coach questions)")
 
 	// List command
 	listCmd := &cobra.Command{
@@ -163,8 +164,9 @@ func runDrill(cmd *cobra.Command, args []string) {
 
 	// Run drill loop
 	allowDomainPicker := skillFlag == "" && len(args) == 0
+	voiceEnabled, _ := cmd.Flags().GetBool("voice")
 	for {
-		m := tui.NewModel(database, skill, allowDomainPicker)
+		m := tui.NewModel(database, skill, allowDomainPicker, voiceEnabled)
 		p := tea.NewProgram(m, tea.WithAltScreen())
 
 		finalModel, err := p.Run()

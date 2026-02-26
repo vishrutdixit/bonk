@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"bonk/internal/db"
 	"bonk/internal/llm"
 	"bonk/internal/skills"
+	"bonk/internal/voice"
 )
 
 // Styles
@@ -109,6 +111,11 @@ type Model struct {
 	llmRating         int // LLM's rating of user performance (1-4, 0 if not provided)
 	selectedDomain    string
 	allowDomainPicker bool
+	voiceEnabled      bool
+	recording         bool
+	transcribing      bool
+	recordingProc     *voice.Recording
+	speechProc        *voice.SpeechProcess
 
 	// Welcome screen stats
 	totalSessions  int
@@ -139,7 +146,17 @@ type sessionCreatedMsg struct {
 	err       error
 }
 
-func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool) Model {
+type recordingStartedMsg struct {
+	rec *voice.Recording
+	err error
+}
+
+type transcriptionMsg struct {
+	text string
+	err  error
+}
+
+func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool, voiceEnabled bool) Model {
 	ta := textarea.New()
 	ta.Placeholder = ""
 	ta.CharLimit = 2000
@@ -184,6 +201,7 @@ func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool) Mode
 		maxTurns:          10,
 		showDebug:         false,
 		allowDomainPicker: allowDomainPicker,
+		voiceEnabled:      voiceEnabled,
 		history:           []exchange{},
 		textarea:          ta,
 		viewport:          vp,
@@ -219,6 +237,26 @@ func (m Model) getCoachResponse(userMsg string) tea.Cmd {
 	return func() tea.Msg {
 		resp, err := conv.Send(userMsg)
 		return coachResponseMsg{resp: resp, err: err}
+	}
+}
+
+func (m Model) startRecording() tea.Cmd {
+	return func() tea.Msg {
+		rec, err := voice.StartRecording()
+		return recordingStartedMsg{rec: rec, err: err}
+	}
+}
+
+func (m Model) stopAndTranscribe() tea.Cmd {
+	rec := m.recordingProc
+	return func() tea.Msg {
+		audioPath, err := rec.Stop()
+		if err != nil {
+			return transcriptionMsg{err: err}
+		}
+		text, err := voice.Transcribe(audioPath)
+		os.Remove(audioPath) // cleanup temp file
+		return transcriptionMsg{text: text, err: err}
 	}
 }
 
@@ -328,6 +366,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if answer == "" {
 					return m, nil
 				}
+				// Stop any ongoing speech
+				if m.speechProc != nil {
+					m.speechProc.Stop()
+					m.speechProc = nil
+				}
 
 				// Save exchange
 				if m.lastResp != nil {
@@ -356,6 +399,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if msg.String() == "q" && strings.TrimSpace(m.textarea.Value()) == "" {
 					m.quitting = true
 					return m, tea.Quit
+				}
+				// s skips speech in voice mode
+				if msg.String() == "s" && m.voiceEnabled && m.speechProc != nil {
+					m.speechProc.Stop()
+					m.speechProc = nil
+					return m, nil
+				}
+				// space toggles recording in voice mode (when textarea empty)
+				if msg.String() == " " && m.voiceEnabled && strings.TrimSpace(m.textarea.Value()) == "" {
+					if m.recording {
+						m.recording = false
+						m.transcribing = true
+						return m, m.stopAndTranscribe()
+					}
+					// Stop any ongoing speech before recording
+					if m.speechProc != nil {
+						m.speechProc.Stop()
+						m.speechProc = nil
+					}
+					return m, m.startRecording()
 				}
 				var cmd tea.Cmd
 				m.textarea, cmd = m.textarea.Update(msg)
@@ -434,7 +497,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.llmRating = msg.resp.LLMRating
 		} else {
 			m.state = stateDrilling
+			// Speak coach question if voice mode enabled
+			if m.voiceEnabled {
+				m.speechProc = voice.Speak(msg.resp.Text)
+			}
 		}
+
+	case recordingStartedMsg:
+		if msg.err != nil {
+			// Recording failed to start - stay in drilling state
+			// TODO: show error to user
+			return m, nil
+		}
+		m.recording = true
+		m.recordingProc = msg.rec
+
+	case transcriptionMsg:
+		m.recording = false
+		m.transcribing = false
+		m.recordingProc = nil
+		if msg.err == nil && msg.text != "" {
+			m.textarea.SetValue(msg.text)
+		}
+		// TODO: show error if transcription failed
 
 	case spinner.TickMsg:
 		if m.state == stateLoading {
@@ -537,9 +622,30 @@ func (m Model) renderMainContent() string {
 			b.WriteString(renderMarkdown(m.lastResp.Text, mainWidth-4) + "\n")
 		}
 
-		b.WriteString(userLabelStyle.Render("You") + "\n")
+		b.WriteString(userLabelStyle.Render("You"))
+		if m.recording {
+			recStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+			b.WriteString("  " + recStyle.Render("● REC"))
+		} else if m.transcribing {
+			transcribeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+			b.WriteString("  " + transcribeStyle.Render("transcribing..."))
+		}
+		b.WriteString("\n")
 		b.WriteString(m.textarea.View() + "\n\n")
-		help := "enter submit • ctrl+c clear • esc quit • tab sidebar"
+		var help string
+		if m.recording {
+			help = "space stop recording • esc quit"
+		} else if m.transcribing {
+			help = "transcribing audio..."
+		} else if m.voiceEnabled {
+			if m.speechProc != nil {
+				help = "s skip • space record • enter submit • esc quit"
+			} else {
+				help = "space record • enter submit • ctrl+c clear • esc quit • tab sidebar"
+			}
+		} else {
+			help = "enter submit • ctrl+c clear • esc quit • tab sidebar"
+		}
 		b.WriteString(helpStyle.Render(help))
 
 	case stateRating:
