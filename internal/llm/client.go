@@ -14,7 +14,8 @@ import (
 )
 
 // These can be set at build time via ldflags:
-//   go build -ldflags "-X bonk/internal/llm.embeddedAPIKey=sk-ant-..."
+//
+//	go build -ldflags "-X bonk/internal/llm.embeddedAPIKey=sk-ant-..."
 var (
 	embeddedAPIKey = ""
 	embeddedModel  = ""
@@ -79,6 +80,19 @@ type PerformanceContext struct {
 	OverallSessions  int
 }
 
+func DifficultyLevel(perf *PerformanceContext) string {
+	if perf == nil || perf.OverallSessions < 3 {
+		return "medium"
+	}
+	if perf.OverallAvgRating >= 3.5 {
+		return "hard"
+	}
+	if perf.OverallAvgRating >= 2.5 {
+		return "medium"
+	}
+	return "easy"
+}
+
 func BuildSystemPrompt(skill *skills.Skill, historyContext string, perf *PerformanceContext) string {
 	// Use different prompt for LC domain (problem-solving focused)
 	if skill.Domain == "leetcode-patterns" {
@@ -100,22 +114,19 @@ Use this to avoid repeating questions and to target weak areas.
 
 	difficultySection := ""
 	if perf != nil && perf.OverallSessions >= 3 {
-		level := "medium"
+		level := DifficultyLevel(perf)
 		instruction := ""
 
-		if perf.OverallAvgRating >= 3.5 {
-			level = "hard"
+		if level == "hard" {
 			instruction = `The user is performing very well. Challenge them with:
 - Edge cases and corner cases
 - Subtle variations that trip people up
 - "What if..." scenarios that test deeper understanding
 - Ask them to compare/contrast with similar techniques
 - Time/space optimization questions`
-		} else if perf.OverallAvgRating >= 2.5 {
-			level = "medium"
+		} else if level == "medium" {
 			instruction = "The user is performing adequately. Use standard difficulty questions."
 		} else {
-			level = "easy"
 			instruction = `The user is struggling. Help them build confidence:
 - Start with more direct questions
 - Give clearer hints when stuck
@@ -198,14 +209,15 @@ Use this to vary the problems you present and focus on areas they struggled with
 
 	difficultySection := ""
 	if perf != nil && perf.OverallSessions >= 3 {
-		if perf.OverallAvgRating >= 3.5 {
+		level := DifficultyLevel(perf)
+		if level == "hard" {
 			difficultySection = `
 ## Difficulty: Hard
 User is performing well. Challenge them with:
 - Harder variations or follow-up constraints
 - "What if the input was unsorted?" or "What if we need O(1) space?"
 - Ask them to compare this pattern to similar ones`
-		} else if perf.OverallAvgRating < 2.5 {
+		} else if level == "easy" {
 			difficultySection = `
 ## Difficulty: Easy
 User is struggling. Help them:
@@ -286,6 +298,10 @@ func parseResponse(text string) *Response {
 type Conversation struct {
 	systemPrompt string
 	messages     []message
+}
+
+func (c *Conversation) SystemPrompt() string {
+	return c.systemPrompt
 }
 
 func NewConversation(skill *skills.Skill, historyContext string, perf *PerformanceContext) *Conversation {

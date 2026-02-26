@@ -87,19 +87,24 @@ type Model struct {
 	conversation *llm.Conversation
 	sessionID    string
 
-	state     state
-	turn      int
-	maxTurns  int
-	lastResp  *llm.Response
-	history   []exchange
-	textarea  textarea.Model
-	viewport  viewport.Model
-	spinner   spinner.Model
-	width     int
-	height    int
-	err       error
-	quitting  bool
+	state          state
+	turn           int
+	maxTurns       int
+	lastResp       *llm.Response
+	history        []exchange
+	textarea       textarea.Model
+	viewport       viewport.Model
+	spinner        spinner.Model
+	width          int
+	height         int
+	err            error
+	quitting       bool
 	continueToNext bool
+	devMode        bool
+	showDebug      bool
+	historyCtx     string
+	difficulty     string
+	systemPrompt   string
 
 	// Welcome screen stats
 	totalSessions int
@@ -125,7 +130,7 @@ type sessionCreatedMsg struct {
 	err       error
 }
 
-func NewModel(database *db.DB, skill *skills.Skill) Model {
+func NewModel(database *db.DB, skill *skills.Skill, devMode bool) Model {
 	ta := textarea.New()
 	ta.Placeholder = ""
 	ta.CharLimit = 2000
@@ -158,6 +163,7 @@ func NewModel(database *db.DB, skill *skills.Skill) Model {
 		state:         stateWelcome,
 		turn:          0,
 		maxTurns:      10,
+		devMode:       devMode,
 		history:       []exchange{},
 		textarea:      ta,
 		viewport:      vp,
@@ -205,8 +211,11 @@ func (m *Model) startDrill() tea.Cmd {
 			OverallSessions:  overallCount,
 		}
 	}
+	m.historyCtx = historyCtx
+	m.difficulty = llm.DifficultyLevel(perf)
 
 	m.conversation = llm.NewConversation(m.skill, historyCtx, perf)
+	m.systemPrompt = m.conversation.SystemPrompt()
 	m.state = stateLoading
 	m.textarea.Focus()
 
@@ -236,6 +245,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateDrilling:
+			if m.devMode && msg.String() == "S" {
+				m.showDebug = !m.showDebug
+				return m, nil
+			}
 			switch msg.Type {
 			case tea.KeyCtrlC:
 				// Clear buffer
@@ -291,6 +304,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateRating:
+			if m.devMode && msg.String() == "S" {
+				m.showDebug = !m.showDebug
+				return m, nil
+			}
 			switch msg.String() {
 			case "1", "2", "3", "4":
 				rating := int(msg.String()[0] - '0')
@@ -316,6 +333,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateLoading:
+			if m.devMode && msg.String() == "S" {
+				m.showDebug = !m.showDebug
+				return m, nil
+			}
 			if msg.Type == tea.KeyEsc || msg.Type == tea.KeyCtrlC || msg.String() == "q" {
 				m.quitting = true
 				return m, tea.Quit
@@ -379,7 +400,7 @@ func (m Model) renderWithSidebar() string {
 	sidebar := m.renderSidebar()
 
 	// Calculate widths
-	sidebarWidth := 16
+	sidebarWidth := m.sidebarWidth()
 	mainWidth := m.width - sidebarWidth - 3 // 3 for separator
 	if mainWidth < 40 {
 		mainWidth = 40
@@ -408,7 +429,7 @@ func (m Model) renderMainContent() string {
 	b.WriteString(m.renderHeader())
 	b.WriteString("\n")
 
-	mainWidth := m.width - 20 // Account for sidebar
+	mainWidth := m.width - m.sidebarWidth() - 4
 	if mainWidth < 40 {
 		mainWidth = 40
 	}
@@ -439,7 +460,11 @@ func (m Model) renderMainContent() string {
 
 		b.WriteString(userLabelStyle.Render("You") + "\n")
 		b.WriteString(m.textarea.View() + "\n\n")
-		b.WriteString(helpStyle.Render("enter submit • ctrl+c clear • esc quit"))
+		help := "enter submit • ctrl+c clear • esc quit"
+		if m.devMode {
+			help += " • S debug"
+		}
+		b.WriteString(helpStyle.Render(help))
 
 	case stateRating:
 		if m.lastResp != nil {
@@ -456,13 +481,21 @@ func (m Model) renderMainContent() string {
 		b.WriteString(ratingKeyStyle.Render("[2]") + ratingOptionStyle.Render(" Hard  "))
 		b.WriteString(ratingKeyStyle.Render("[3]") + ratingOptionStyle.Render(" Good  "))
 		b.WriteString(ratingKeyStyle.Render("[4]") + ratingOptionStyle.Render(" Easy") + "\n\n")
-		b.WriteString(helpStyle.Render("1-4 rate • c continue • q quit"))
+		help := "1-4 rate • c continue • q quit"
+		if m.devMode {
+			help += " • S debug"
+		}
+		b.WriteString(helpStyle.Render(help))
 	}
 
 	return b.String()
 }
 
 func (m Model) renderSidebar() string {
+	if m.devMode && m.showDebug {
+		return m.renderDebugSidebar()
+	}
+
 	var b strings.Builder
 
 	// Session info
@@ -488,6 +521,47 @@ func (m Model) renderSidebar() string {
 	}
 
 	return b.String()
+}
+
+func (m Model) renderDebugSidebar() string {
+	var b strings.Builder
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+
+	b.WriteString(labelStyle.Render("dev mode") + "\n")
+	b.WriteString(valueStyle.Render("on") + "\n\n")
+
+	b.WriteString(labelStyle.Render("skill id") + "\n")
+	b.WriteString(valueStyle.Render(m.skill.ID) + "\n\n")
+
+	b.WriteString(labelStyle.Render("difficulty") + "\n")
+	b.WriteString(valueStyle.Render(m.difficulty) + "\n\n")
+
+	b.WriteString(labelStyle.Render("facets") + "\n")
+	b.WriteString(valueStyle.Render(wordWrap(strings.Join(m.skill.Facets, ", "), m.sidebarWidth()-4)) + "\n\n")
+
+	b.WriteString(labelStyle.Render("history ctx") + "\n")
+	history := m.historyCtx
+	if strings.TrimSpace(history) == "" {
+		history = "(none)"
+	}
+	b.WriteString(valueStyle.Render(wordWrap(history, m.sidebarWidth()-4)) + "\n\n")
+
+	b.WriteString(labelStyle.Render("system prompt") + "\n")
+	promptPreview := m.systemPrompt
+	if len(promptPreview) > 700 {
+		promptPreview = promptPreview[:700] + "\n... (truncated)"
+	}
+	b.WriteString(valueStyle.Render(wordWrap(promptPreview, m.sidebarWidth()-4)) + "\n")
+
+	return b.String()
+}
+
+func (m Model) sidebarWidth() int {
+	if m.devMode && m.showDebug {
+		return 52
+	}
+	return 16
 }
 
 func renderMarkdown(text string, width int) string {
@@ -618,6 +692,8 @@ func domainShort(domain string) string {
 		return "algo"
 	case "system-design":
 		return "sys"
+	case "leetcode-patterns":
+		return "lc"
 	default:
 		return ""
 	}

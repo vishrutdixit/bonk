@@ -13,9 +13,11 @@ go build -o bin/bonk ./cmd/bonk
 
 ```bash
 ./bin/bonk           # Drill (prioritizes due → new → random)
+./bin/bonk --dev     # Drill with dev debug panel (press S in-session)
 ./bin/bonk ds        # Data structures only
 ./bin/bonk algo      # Algorithm patterns only
 ./bin/bonk sys       # System design only
+./bin/bonk lc        # LeetCode patterns only
 ./bin/bonk --skill X # Specific skill
 ./bin/bonk list      # List all skills
 ./bin/bonk stats     # Show progress

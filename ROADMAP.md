@@ -20,6 +20,8 @@ Developer tooling for debugging and skill iteration.
 - Press `S` during drill to show: skill ID, current facets, difficulty level, session history context
 - Useful for tuning skill definitions and prompt behavior
 
+Status: Implemented (February 25, 2026) with `--dev` and in-session `S` debug panel.
+
 ## P1: High Priority
 
 Core features that significantly expand capability.
