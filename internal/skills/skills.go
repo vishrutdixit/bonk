@@ -268,6 +268,91 @@ func init() {
 		},
 	})
 
+	register(&Skill{
+		ID:          "tries",
+		Name:        "Tries (Prefix Trees)",
+		Domain:      "data-structures",
+		Description: "Tree structure for efficient string prefix operations",
+		Facets: []string{
+			"trie structure (nodes represent characters, paths form words)",
+			"insert, search, startsWith operations (all O(m) where m = word length)",
+			"space optimization (compressed tries, radix trees)",
+			"use cases: autocomplete, spell check, IP routing, word games",
+			"trade-offs vs hash maps (prefix queries vs exact lookup)",
+		},
+		ExampleProblems: []string{
+			"Implement trie",
+			"Word search II",
+			"Design autocomplete system",
+			"Replace words",
+			"Longest word in dictionary",
+		},
+	})
+
+	register(&Skill{
+		ID:          "union-find",
+		Name:        "Union-Find (Disjoint Set)",
+		Domain:      "data-structures",
+		Description: "Data structure for tracking disjoint sets and connectivity",
+		Facets: []string{
+			"operations: find (which set?), union (merge sets)",
+			"path compression (flatten tree on find)",
+			"union by rank/size (attach smaller tree under larger)",
+			"near O(1) amortized with both optimizations",
+			"use cases: connected components, cycle detection, Kruskal's MST",
+		},
+		ExampleProblems: []string{
+			"Number of connected components",
+			"Redundant connection (cycle detection)",
+			"Accounts merge",
+			"Earliest moment when everyone becomes friends",
+			"Satisfiability of equality equations",
+		},
+	})
+
+	register(&Skill{
+		ID:          "lru-cache",
+		Name:        "LRU Cache",
+		Domain:      "data-structures",
+		Description: "Least Recently Used cache with O(1) get and put",
+		Facets: []string{
+			"structure: hash map + doubly linked list",
+			"hash map for O(1) lookup by key",
+			"doubly linked list for O(1) removal and insertion at ends",
+			"on access: move node to front (most recent)",
+			"on capacity overflow: evict from back (least recent)",
+			"variations: LFU (frequency-based), TTL expiration",
+		},
+		ExampleProblems: []string{
+			"LRU cache",
+			"LFU cache",
+			"Design in-memory cache with TTL",
+			"Design a browser history",
+		},
+	})
+
+	register(&Skill{
+		ID:          "bloom-filters",
+		Name:        "Bloom Filters",
+		Domain:      "data-structures",
+		Description: "Probabilistic data structure for set membership",
+		Facets: []string{
+			"structure: bit array + multiple hash functions",
+			"insert: set bits at all hash positions",
+			"query: check if all hash positions are set",
+			"false positives possible, false negatives impossible",
+			"space efficient (bits, not full elements)",
+			"use cases: spell check, cache filtering, duplicate detection",
+			"tuning: size and hash count affect false positive rate",
+		},
+		ExampleProblems: []string{
+			"When would you use a bloom filter vs a hash set?",
+			"How would you reduce false positive rate?",
+			"Design a web crawler that avoids revisiting URLs",
+			"Filter cache misses before hitting database",
+		},
+	})
+
 	// Algorithm Patterns
 	register(&Skill{
 		ID:          "sliding-window",
@@ -827,16 +912,38 @@ func init() {
 		Description: "Distributing traffic across servers",
 		Facets: []string{
 			"algorithms (round robin, weighted, least connections)",
-			"consistent hashing",
-			"health checks",
+			"health checks and failover",
 			"sticky sessions (when needed, trade-offs)",
-			"L4 vs L7 load balancing",
+			"L4 vs L7 load balancing (TCP vs HTTP awareness)",
+			"DNS load balancing (geographic, latency-based)",
 		},
 		ExampleProblems: []string{
 			"Design a load balancer",
 			"Handle server failures gracefully",
 			"Session affinity requirements",
 			"Geographic load distribution",
+		},
+	})
+
+	register(&Skill{
+		ID:          "consistent-hashing",
+		Name:        "Consistent Hashing",
+		Domain:      "system-design",
+		Description: "Hash-based distribution with minimal redistribution on changes",
+		Facets: []string{
+			"problem with modulo hashing (N changes → most keys move)",
+			"hash ring concept (map keys and nodes to positions on ring)",
+			"key assignment (walk clockwise to find responsible node)",
+			"virtual nodes (multiple positions per physical node, better distribution)",
+			"node add/remove (only keys between neighbors move, ~1/N keys)",
+			"use cases: distributed caches, database sharding, CDNs, load balancing",
+			"implementations: Cassandra, DynamoDB, memcached, Chord DHT",
+		},
+		ExampleProblems: []string{
+			"Why does adding a node only move ~1/N keys?",
+			"How do virtual nodes help with load balancing?",
+			"Design a distributed cache with consistent hashing",
+			"How would you handle hotspots with consistent hashing?",
 		},
 	})
 
