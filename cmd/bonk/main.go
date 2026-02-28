@@ -80,7 +80,7 @@ Domains:
 	rootCmd.Version = buildinfo.Version
 
 	rootCmd.Flags().String("skill", "", "Specific skill ID to drill")
-	rootCmd.Flags().BoolP("voice", "v", false, "Enable voice mode (TTS for coach questions)")
+	rootCmd.Flags().BoolP("voice", "v", true, "Voice mode (TTS for coach, space to record). Use --voice=false to disable")
 
 	// List command
 	listCmd := &cobra.Command{

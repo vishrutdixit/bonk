@@ -61,15 +61,11 @@ bonk version
 
 ## Voice Mode
 
-Practice explaining concepts out loud (macOS only):
+Voice mode is enabled by default on macOS. Coach questions are spoken aloud and you record your answers.
 
-```bash
-bonk --voice
-```
-
-- Coach questions are spoken aloud
 - Press `space` to record your answer
 - Press `s` to skip speech
+- Use `bonk --voice=false` to disable
 
 ## Mobile / Remote Drill
 
