@@ -1353,6 +1353,7 @@ func init() {
 		Domain:      "system-design",
 		Description: "Comparing polling, long-polling, SSE, and WebSockets for real-time updates",
 		Facets: []string{
+			"the problem: HTTP is request-response (client initiates) - how does server push updates?",
 			"simple polling (client pulls at intervals, high latency, wasteful)",
 			"long polling (hold request open until data, better latency, connection overhead)",
 			"Server-Sent Events (SSE) (server push over HTTP, unidirectional, auto-reconnect)",
