@@ -1076,6 +1076,31 @@ func init() {
 	})
 
 	register(&Skill{
+		ID:          "kafka",
+		Name:        "Apache Kafka",
+		Domain:      "system-design",
+		Description: "Distributed event streaming platform",
+		Facets: []string{
+			"core concepts: topics, partitions, brokers, producers, consumers",
+			"consumer groups (parallel consumption, partition assignment)",
+			"offsets (position tracking, commit strategies, replay from offset)",
+			"log-based storage (append-only, immutable, retention policies)",
+			"ordering (per-partition only, not global)",
+			"compacted topics (keep latest per key, changelogs)",
+			"Kafka vs traditional queues (log replay vs consume-and-delete)",
+			"Kafka vs Kinesis (self-managed vs AWS, shards vs partitions)",
+			"Kafka vs Pub/Sub (ordering, replay, managed vs self-hosted)",
+			"managed options: Confluent Cloud, AWS MSK",
+		},
+		ExampleProblems: []string{
+			"When would you choose Kafka over SQS?",
+			"How do consumer groups enable parallel processing?",
+			"How would you replay events from yesterday?",
+			"Design an event sourcing system with Kafka",
+		},
+	})
+
+	register(&Skill{
 		ID:          "cap-theorem",
 		Name:        "CAP Theorem",
 		Domain:      "system-design",
