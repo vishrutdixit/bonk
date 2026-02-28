@@ -1132,7 +1132,7 @@ func init() {
 			"simple polling (client pulls at intervals, high latency, wasteful)",
 			"long polling (hold request open until data, better latency, connection overhead)",
 			"Server-Sent Events (SSE) (server push over HTTP, unidirectional, auto-reconnect)",
-			"WebSockets (persistent bidirectional, low latency, connection state management)",
+			"WebSockets (HTTP upgrade → persistent TCP, bidirectional, low latency)",
 			"trade-offs: latency, scalability, firewall compatibility, mobile battery",
 			"when to use each (notifications→SSE, chat→WS, dashboards→polling/SSE)",
 		},
