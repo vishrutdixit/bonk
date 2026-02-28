@@ -79,3 +79,135 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/checksums.txt
+
+  update-homebrew:
+    name: Update Homebrew formula
+    runs-on: ubuntu-latest
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download checksums
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${GITHUB_REF_NAME}"
+          BASE_URL="https://github.com/vishrutdixit/bonk/releases/download/${TAG}"
+
+          # Download all tarballs and compute SHA256
+          for platform in darwin-arm64 darwin-amd64 linux-arm64 linux-amd64; do
+            curl -sSL "${BASE_URL}/bonk-${platform}.tar.gz" -o "bonk-${platform}.tar.gz"
+          done
+
+          # Compute checksums
+          SHA_DARWIN_ARM64=$(sha256sum bonk-darwin-arm64.tar.gz | cut -d' ' -f1)
+          SHA_DARWIN_AMD64=$(sha256sum bonk-darwin-amd64.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_ARM64=$(sha256sum bonk-linux-arm64.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_AMD64=$(sha256sum bonk-linux-amd64.tar.gz | cut -d' ' -f1)
+
+          # Save for next step
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+          echo "SHA_DARWIN_ARM64=${SHA_DARWIN_ARM64}" >> $GITHUB_ENV
+          echo "SHA_DARWIN_AMD64=${SHA_DARWIN_AMD64}" >> $GITHUB_ENV
+          echo "SHA_LINUX_ARM64=${SHA_LINUX_ARM64}" >> $GITHUB_ENV
+          echo "SHA_LINUX_AMD64=${SHA_LINUX_AMD64}" >> $GITHUB_ENV
+
+      - name: Update Homebrew tap
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          # Generate updated formula
+          cat > bonk.rb << 'FORMULA_EOF'
+          class Bonk < Formula
+            desc "LLM-powered spaced repetition CLI for technical interview prep"
+            homepage "https://github.com/vishrutdixit/bonk"
+            version "VERSION_PLACEHOLDER"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/vishrutdixit/bonk/releases/download/TAG_PLACEHOLDER/bonk-darwin-arm64.tar.gz"
+                sha256 "SHA_DARWIN_ARM64_PLACEHOLDER"
+              end
+              on_intel do
+                url "https://github.com/vishrutdixit/bonk/releases/download/TAG_PLACEHOLDER/bonk-darwin-amd64.tar.gz"
+                sha256 "SHA_DARWIN_AMD64_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/vishrutdixit/bonk/releases/download/TAG_PLACEHOLDER/bonk-linux-arm64.tar.gz"
+                sha256 "SHA_LINUX_ARM64_PLACEHOLDER"
+              end
+              on_intel do
+                url "https://github.com/vishrutdixit/bonk/releases/download/TAG_PLACEHOLDER/bonk-linux-amd64.tar.gz"
+                sha256 "SHA_LINUX_AMD64_PLACEHOLDER"
+              end
+            end
+
+            depends_on "sox" => :recommended
+            depends_on "whisper-cpp" => :recommended
+
+            def install
+              binary_name = "bonk-#{OS.kernel_name.downcase}-#{Hardware::CPU.arch == :arm64 ? "arm64" : "amd64"}"
+              bin.install binary_name => "bonk"
+            end
+
+            def post_install
+              (var/"bonk").mkpath
+              if OS.mac? && build.with?("whisper-cpp")
+                bonk_dir = Pathname.new(Dir.home)/".bonk"
+                bonk_dir.mkpath
+                model_path = bonk_dir/"ggml-tiny.en.bin"
+                unless model_path.exist?
+                  ohai "Downloading whisper model for voice mode..."
+                  system "curl", "-sSL",
+                    "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin",
+                    "-o", model_path
+                end
+              end
+            end
+
+            def caveats
+              <<~EOS
+                To use bonk, you need an Anthropic API key:
+                  export ANTHROPIC_API_KEY="your-key-here"
+
+                Start drilling:
+                  bonk
+
+                Voice mode (macOS):
+                  bonk --voice
+              EOS
+            end
+
+            test do
+              assert_match "bonk", shell_output("#{bin}/bonk --version")
+            end
+          end
+          FORMULA_EOF
+
+          # Replace placeholders
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" bonk.rb
+          sed -i "s/TAG_PLACEHOLDER/${TAG}/g" bonk.rb
+          sed -i "s/SHA_DARWIN_ARM64_PLACEHOLDER/${SHA_DARWIN_ARM64}/g" bonk.rb
+          sed -i "s/SHA_DARWIN_AMD64_PLACEHOLDER/${SHA_DARWIN_AMD64}/g" bonk.rb
+          sed -i "s/SHA_LINUX_ARM64_PLACEHOLDER/${SHA_LINUX_ARM64}/g" bonk.rb
+          sed -i "s/SHA_LINUX_AMD64_PLACEHOLDER/${SHA_LINUX_AMD64}/g" bonk.rb
+
+          # Push to tap repo via GitHub API
+          CONTENT=$(base64 -w0 bonk.rb)
+
+          # Get current file SHA
+          CURRENT_SHA=$(curl -sS -H "Authorization: token ${TAP_GITHUB_TOKEN}" \
+            "https://api.github.com/repos/vishrutdixit/homebrew-tap/contents/Formula/bonk.rb" \
+            | jq -r '.sha')
+
+          # Update file
+          curl -sS -X PUT \
+            -H "Authorization: token ${TAP_GITHUB_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/vishrutdixit/homebrew-tap/contents/Formula/bonk.rb" \
+            -d "{\"message\": \"Update bonk to ${TAG}\", \"content\": \"${CONTENT}\", \"sha\": \"${CURRENT_SHA}\"}"
+
+          echo "Updated Homebrew formula to ${TAG}"
