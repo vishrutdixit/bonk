@@ -1101,6 +1101,29 @@ func init() {
 	})
 
 	register(&Skill{
+		ID:          "tcp-udp-networking",
+		Name:        "TCP, UDP, and Network Fundamentals",
+		Domain:      "system-design",
+		Description: "Transport layer protocols and networking basics for system design",
+		Facets: []string{
+			"TCP fundamentals (connection-oriented, reliable, ordered, flow control)",
+			"TCP handshake (3-way: SYN, SYN-ACK, ACK; teardown: FIN)",
+			"TCP congestion control (slow start, AIMD, congestion window)",
+			"UDP fundamentals (connectionless, unreliable, no ordering, low overhead)",
+			"TCP vs UDP trade-offs (reliability vs latency, gaming/video vs web)",
+			"HTTP over TCP (why HTTP/1.1 and HTTP/2 use TCP, head-of-line blocking)",
+			"QUIC/HTTP3 (UDP-based, multiplexed streams, 0-RTT)",
+			"when to use each (video streaming→UDP, API calls→TCP, real-time games→UDP)",
+		},
+		ExampleProblems: []string{
+			"Why does video conferencing use UDP instead of TCP?",
+			"How does TCP ensure reliable delivery?",
+			"What causes head-of-line blocking in HTTP/2?",
+			"When would you choose QUIC over TCP?",
+		},
+	})
+
+	register(&Skill{
 		ID:          "realtime-communication",
 		Name:        "Real-Time Communication Patterns",
 		Domain:      "system-design",
