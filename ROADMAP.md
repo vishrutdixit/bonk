@@ -49,7 +49,7 @@ Use bonk from phone.
 
 Start with ttyd for instant mobile access (same network). Add Tailscale detection later for remote access.
 
-Status: Phase 1 implemented (February 25, 2026). `bonk serve` wraps ttyd for web terminal access.
+Status: Phase 1.5 implemented (February 28, 2026). `bonk serve` wraps ttyd, auto-detects Tailscale IP for remote access.
 
 ### LC Domain & Archetypes (M-L)
 
@@ -108,14 +108,59 @@ Status: Implemented (February 26, 2026). TTS via macOS `say` at 280 wpm, STT via
 
 Improve core experience.
 
-### Onboarding (M)
+### Onboarding (M-L)
 
-Initial calibration for new users.
+Interactive first-run experience that personalizes the entire program.
 
-- First-run questionnaire: experience level (beginner/intermediate/advanced), familiar domains
-- Option to mark skills as "already know" to skip or reduce frequency
-- Seed initial difficulty based on responses instead of waiting for 3 sessions
-- Store in `~/.bonk/profile.json`
+**What to gather:**
+- Experience level (new grad / 2-5 years / senior / staff+)
+- Current role (SWE, infra, ML, frontend, etc.)
+- Interview timeline (casual prep / interviewing soon / active interviews)
+- Focus areas (which domains to prioritize: DS, algo, system design, LC)
+- Self-assessed strengths ("I'm good at trees and graphs")
+- Self-assessed weaknesses ("I struggle with DP and system design")
+- Learning style preferences (more hints vs sink-or-swim, encouraging vs critical)
+
+**How it influences the program:**
+- Skill selection: prioritize weak areas, deprioritize strengths
+- Difficulty calibration: start harder for experienced users
+- Prompt tone: more encouraging for beginners, more critical for senior
+- Domain focus: weight skill selection toward chosen domains
+- Feedback style: adjust based on learning preferences
+- Session length defaults: shorter for casual, longer for intensive prep
+
+**Implementation approaches:**
+
+*Option A: Simple CLI prompts*
+- Series of multiple-choice questions on first run
+- Quick to implement, works everywhere
+- Less conversational, more robotic
+
+*Option B: LLM-powered conversational onboarding*
+- Natural conversation: "Tell me about your background..."
+- LLM extracts structured data from free-form responses
+- More engaging, can ask follow-ups
+- Higher cost (LLM calls), more complex
+
+*Option C: Hybrid*
+- Start with a few structured questions (experience, timeline)
+- Use LLM for open-ended parts (strengths/weaknesses)
+- Balance between structure and flexibility
+
+**Storage:**
+- `~/.bonk/profile.json` for user profile
+- Add `profile` table to SQLite for structured data
+- Profile can be updated: `bonk profile` to view/edit
+
+**Profile evolution:**
+- Initial onboarding seeds the profile
+- Performance data refines it over time (claimed strength but struggling? adjust)
+- Periodic check-ins: "You've improved at DP - want to increase difficulty?"
+
+**Open questions:**
+- Should profile affect SM-2 scheduling or just skill selection?
+- How to handle profile updates without losing calibration data?
+- Should there be "interview mode" that ignores profile and goes hard?
 
 ### Better Analytics (M)
 
@@ -133,6 +178,8 @@ Review past drill sessions.
 - `bonk history` command to list recent sessions
 - `bonk history <session-id>` to replay Q&A transcript
 - Useful for spaced repetition review and self-assessment
+
+Status: Partially implemented (February 28, 2026). `bonk review` shows last session transcript, `bonk review --feedback` gets AI analysis of delivery/communication patterns. Still needs: list of sessions, session by ID.
 
 ### Skill Dependencies (M)
 
@@ -211,6 +258,14 @@ Export drill content to Anki for offline flashcard practice.
 ## Future Ideas
 
 Unprioritized explorations.
+
+### System Design Practical Domain
+
+Full interview simulations (Design Twitter, Design Uber, etc.) with phase-aware prompting following the Hello Interview framework.
+
+Phases: Requirements → Core Entities → API Design → Data Flow → High-Level Design → Deep Dives
+
+Status: Implemented (February 28, 2026). `bonk sysp` domain with 6 practical skills, phase tracking in TUI header, extended turn limits (40 turns).
 
 ### Interview Simulation Mode
 

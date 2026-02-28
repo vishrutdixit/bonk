@@ -48,11 +48,14 @@ go build -o bin/bonk ./cmd/bonk
 bonk                       # Start drilling (recommended)
 bonk ds                    # Data structures only
 bonk algo                  # Algorithm patterns only
-bonk sys                   # System design only
+bonk sys                   # System design concepts
+bonk sysp                  # System design interviews (practical)
 bonk lc                    # LeetCode patterns only
 bonk --skill hash-maps
 bonk list
 bonk info hash-maps
+bonk review                # Review last session transcript
+bonk review --feedback     # Get AI feedback on your performance
 bonk version
 ```
 
@@ -75,7 +78,7 @@ brew install ttyd
 bonk serve
 ```
 
-Open the printed URL from your phone on the same WiFi.
+Open the printed URL from your phone. Works on the same WiFi, or anywhere via Tailscale (auto-detected).
 
 ## Configuration
 

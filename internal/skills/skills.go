@@ -55,22 +55,25 @@ func ListIDsByDomain() map[string][]string {
 }
 
 func Domains() []string {
-	return []string{"data-structures", "algorithm-patterns", "system-design", "leetcode-patterns"}
+	return []string{"data-structures", "algorithm-patterns", "system-design", "system-design-practical", "leetcode-patterns"}
 }
 
 // Domain short names
 var DomainMap = map[string]string{
-	"ds":                 "data-structures",
-	"data-structures":    "data-structures",
-	"algo":               "algorithm-patterns",
-	"algorithms":         "algorithm-patterns",
-	"algorithm-patterns": "algorithm-patterns",
-	"sys":                "system-design",
-	"system":             "system-design",
-	"system-design":      "system-design",
-	"lc":                 "leetcode-patterns",
-	"leetcode":           "leetcode-patterns",
-	"leetcode-patterns":  "leetcode-patterns",
+	"ds":                      "data-structures",
+	"data-structures":         "data-structures",
+	"algo":                    "algorithm-patterns",
+	"algorithms":              "algorithm-patterns",
+	"algorithm-patterns":      "algorithm-patterns",
+	"sys":                     "system-design",
+	"system":                  "system-design",
+	"system-design":           "system-design",
+	"sysp":                    "system-design-practical",
+	"practical":               "system-design-practical",
+	"system-design-practical": "system-design-practical",
+	"lc":                      "leetcode-patterns",
+	"leetcode":                "leetcode-patterns",
+	"leetcode-patterns":       "leetcode-patterns",
 }
 
 func init() {
@@ -651,11 +654,13 @@ func init() {
 		Domain:      "algorithm-patterns",
 		Description: "Mathematical techniques for algorithm problems",
 		Facets: []string{
+			"parity arguments (odd/even invariants, reachability)",
 			"digit manipulation (extract digits, digit sum)",
 			"GCD/LCM (Euclidean algorithm)",
 			"modular arithmetic (mod properties, mod inverse)",
 			"prime numbers (sieve, primality testing)",
 			"overflow handling (when to use long, mod 10^9+7)",
+			"state-space BFS (when formula has edge cases, reduce to graph search on counts)",
 		},
 		ExampleProblems: []string{
 			"Pow(x, n) - fast exponentiation",
@@ -663,6 +668,7 @@ func init() {
 			"Add digits (digital root)",
 			"Fraction to recurring decimal",
 			"Max points on a line (GCD for slope)",
+			"Minimum Operations to Equalize Binary String",
 		},
 	})
 
@@ -1097,7 +1103,7 @@ func init() {
 	register(&Skill{
 		ID:          "ci-cd-systems",
 		Name:        "CI/CD Systems",
-		Domain:      "system-design",
+		Domain:      "system-design-practical",
 		Description: "Continuous integration and deployment workflow systems",
 		Facets: []string{
 			"event triggering (webhooks, polling, push events from VCS)",
@@ -1118,7 +1124,7 @@ func init() {
 	register(&Skill{
 		ID:          "online-chess-platform",
 		Name:        "Online Chess Platform",
-		Domain:      "system-design",
+		Domain:      "system-design-practical",
 		Description: "Low-latency multiplayer game system with real-time state sync",
 		Facets: []string{
 			"matchmaking (quick pairings, rating buckets, timeout handling)",
@@ -1138,7 +1144,7 @@ func init() {
 	register(&Skill{
 		ID:          "messenger-chat-system",
 		Name:        "Messenger / Chat System",
-		Domain:      "system-design",
+		Domain:      "system-design-practical",
 		Description: "Real-time 1:1 messaging with presence, receipts, and multi-device sync",
 		Facets: []string{
 			"delivery semantics (at-least-once, deduplication, retries)",
@@ -1152,6 +1158,66 @@ func init() {
 			"Guarantee message ordering across flaky networks",
 			"Design presence and read receipts at scale",
 			"Build multi-device history sync with offline retry",
+		},
+	})
+
+	register(&Skill{
+		ID:          "design-twitter",
+		Name:        "Design Twitter",
+		Domain:      "system-design-practical",
+		Description: "Social media platform with feeds, posts, follows, and timeline ranking",
+		Facets: []string{
+			"feed generation (fanout-on-write vs fanout-on-read)",
+			"timeline ranking and personalization",
+			"handling celebrity accounts (millions of followers)",
+			"caching strategy (user timeline, home feed)",
+			"real-time updates and notifications",
+		},
+		ExampleProblems: []string{
+			"Twitter/X",
+			"Facebook News Feed",
+			"Instagram Feed",
+			"LinkedIn Feed",
+		},
+	})
+
+	register(&Skill{
+		ID:          "design-uber",
+		Name:        "Design Uber",
+		Domain:      "system-design-practical",
+		Description: "Ride-sharing platform with real-time matching, routing, and payments",
+		Facets: []string{
+			"real-time location tracking and geospatial indexing",
+			"driver-rider matching algorithm",
+			"surge pricing and demand prediction",
+			"ETA calculation and routing",
+			"payment processing and fraud detection",
+		},
+		ExampleProblems: []string{
+			"Uber/Lyft",
+			"DoorDash/Instacart",
+			"Yelp (nearby search)",
+			"Google Maps (routing)",
+		},
+	})
+
+	register(&Skill{
+		ID:          "design-dropbox",
+		Name:        "Design Dropbox",
+		Domain:      "system-design-practical",
+		Description: "File storage and sync service with versioning and collaboration",
+		Facets: []string{
+			"chunking and deduplication",
+			"sync protocol (delta sync, conflict resolution)",
+			"metadata vs content storage separation",
+			"file versioning and history",
+			"sharing and permissions",
+		},
+		ExampleProblems: []string{
+			"Dropbox/Google Drive",
+			"OneDrive",
+			"iCloud Drive",
+			"Box",
 		},
 	})
 

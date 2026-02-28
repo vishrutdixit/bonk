@@ -14,6 +14,7 @@ import (
 
 	"bonk/internal/buildinfo"
 	"bonk/internal/db"
+	"bonk/internal/llm"
 	"bonk/internal/serve"
 	"bonk/internal/skills"
 	"bonk/internal/tui"
@@ -71,6 +72,7 @@ Domains:
   ds    - Data Structures (hash maps, trees, heaps, etc.)
   algo  - Algorithm Patterns (sliding window, binary search, etc.)
   sys   - System Design (load balancing, caching, etc.)
+  sysp  - System Design Practical (interview simulations)
   lc    - LeetCode Patterns (problem-solving archetypes)`,
 		Args: cobra.MaximumNArgs(1),
 		Run:  runDrill,
@@ -136,6 +138,23 @@ Requires Homebrew on macOS.`,
 	}
 	rootCmd.AddCommand(setupCmd)
 
+	// Review command - view and get feedback on past sessions
+	reviewCmd := &cobra.Command{
+		Use:   "review [skill]",
+		Short: "Review your last session and get AI feedback",
+		Long: `View your last drill session and optionally get detailed AI feedback
+on your performance, communication style, and areas to improve.
+
+Examples:
+  bonk review              Review your most recent session
+  bonk review hash-maps    Review your last hash-maps session
+  bonk review --feedback   Get AI feedback on your last session`,
+		Args: cobra.MaximumNArgs(1),
+		Run:  runReview,
+	}
+	reviewCmd.Flags().BoolP("feedback", "f", false, "Get AI feedback on the session")
+	rootCmd.AddCommand(reviewCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -164,7 +183,7 @@ func runDrill(cmd *cobra.Command, args []string) {
 		// Domain filter specified
 		domain, ok := skills.DomainMap[args[0]]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys, lc\n", args[0])
+			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys, sysp, lc\n", args[0])
 			os.Exit(1)
 		}
 		domainFilter = domain
@@ -217,7 +236,7 @@ func runList(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		domain, ok := skills.DomainMap[args[0]]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys, lc\n", args[0])
+			fmt.Fprintf(os.Stderr, "Unknown domain: %s\nAvailable: ds, algo, sys, sysp, lc\n", args[0])
 			os.Exit(1)
 		}
 		domainFilter = domain
@@ -394,4 +413,83 @@ func runSetup(cmd *cobra.Command, args []string) {
 
 	fmt.Println("\nVoice mode setup complete!")
 	fmt.Println("Run: bonk --voice")
+}
+
+func runReview(cmd *cobra.Command, args []string) {
+	database, err := db.Open()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer database.Close()
+
+	// Get skill filter if provided
+	var skillID string
+	if len(args) > 0 {
+		skillID = args[0]
+		if skills.Get(skillID) == nil {
+			fmt.Fprintf(os.Stderr, "Unknown skill: %s\n", skillID)
+			os.Exit(1)
+		}
+	}
+
+	// Get last session
+	session, err := database.GetLastSession(skillID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting session: %v\n", err)
+		os.Exit(1)
+	}
+	if session == nil {
+		fmt.Println("No completed sessions found.")
+		return
+	}
+
+	// Get skill info
+	skill := skills.Get(session.SkillID)
+	skillName := session.SkillID
+	if skill != nil {
+		skillName = skill.Name
+	}
+
+	// Print session info
+	fmt.Println()
+	fmt.Printf("Session: %s\n", skillName)
+	fmt.Printf("Date: %s\n", session.StartedAt[:10])
+	fmt.Printf("Rating: %d/4\n", session.Rating)
+	fmt.Println()
+	fmt.Println(strings.Repeat("─", 60))
+
+	// Print exchanges
+	for _, ex := range session.Exchanges {
+		fmt.Println()
+		fmt.Printf("Coach:\n%s\n", ex.Question)
+		fmt.Println()
+		fmt.Printf("You:\n%s\n", ex.Answer)
+		fmt.Println()
+		fmt.Println(strings.Repeat("─", 40))
+	}
+
+	// Get AI feedback if requested
+	wantFeedback, _ := cmd.Flags().GetBool("feedback")
+	if wantFeedback {
+		fmt.Println()
+		fmt.Println("Getting AI feedback...")
+		fmt.Println()
+
+		// Convert exchanges to llm format
+		exchanges := make([]llm.ExchangeData, len(session.Exchanges))
+		for i, ex := range session.Exchanges {
+			exchanges[i] = llm.ExchangeData{
+				Question: ex.Question,
+				Answer:   ex.Answer,
+			}
+		}
+
+		feedback, err := llm.GetSessionFeedback(session.SkillID, exchanges)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting feedback: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(feedback)
+	}
 }

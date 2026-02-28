@@ -25,18 +25,21 @@ func Run(port string) error {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
-	// Get local IP for phone access
+	// Get IPs for access
 	localIP := getLocalIP()
+	tailscaleIP := getTailscaleIP()
 
 	// Build ttyd command
 	// -W enables writable mode (allows input from browser)
 	// -t options set xterm.js terminal options for better mobile experience
+	// Use bash -c with stty to force terminal size for mobile compatibility
 	cmd := exec.Command("ttyd",
 		"-W",
 		"-p", port,
-		"-t", "fontSize=32",
+		"-t", "fontSize=26",
 		"-t", "cursorBlink=true",
-		exe,
+		"-t", "rendererType=dom",
+		"bash", "-c", fmt.Sprintf("stty rows 30 cols 50; exec %s", exe),
 	)
 	cmd.Env = os.Environ() // Pass through env vars (ANTHROPIC_API_KEY)
 	cmd.Stdout = os.Stdout
@@ -45,9 +48,12 @@ func Run(port string) error {
 	// Print access URLs
 	fmt.Println("bonk web terminal starting...")
 	fmt.Println()
-	fmt.Printf("  Local:   http://localhost:%s\n", port)
+	fmt.Printf("  Local:     http://localhost:%s\n", port)
 	if localIP != "" {
-		fmt.Printf("  Network: http://%s:%s\n", localIP, port)
+		fmt.Printf("  Network:   http://%s:%s\n", localIP, port)
+	}
+	if tailscaleIP != "" {
+		fmt.Printf("  Tailscale: http://%s:%s\n", tailscaleIP, port)
 	}
 	fmt.Println()
 	fmt.Println("Press Ctrl+C to stop")
@@ -81,8 +87,32 @@ func getLocalIP() string {
 
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
+			if ip4 := ipnet.IP.To4(); ip4 != nil {
+				// Skip Tailscale IPs (100.64.0.0/10)
+				if ip4[0] == 100 && ip4[1] >= 64 && ip4[1] < 128 {
+					continue
+				}
 				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
+}
+
+// getTailscaleIP returns the Tailscale IP address if available
+func getTailscaleIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ip4 := ipnet.IP.To4(); ip4 != nil {
+				// Tailscale uses 100.64.0.0/10 (CGNAT range)
+				if ip4[0] == 100 && ip4[1] >= 64 && ip4[1] < 128 {
+					return ipnet.IP.String()
+				}
 			}
 		}
 	}

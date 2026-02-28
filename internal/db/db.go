@@ -204,6 +204,87 @@ func (db *DB) FinishSession(sessionID string, rating int, assessment string) err
 
 // Exchange management
 
+type Exchange struct {
+	Turn     int
+	Question string
+	Answer   string
+	Facet    string
+}
+
+type SessionDetail struct {
+	ID         string
+	SkillID    string
+	StartedAt  string
+	FinishedAt string
+	Rating     int
+	Assessment string
+	Exchanges  []Exchange
+}
+
+func (db *DB) GetLastSession(skillID string) (*SessionDetail, error) {
+	var s SessionDetail
+	var finishedAt, assessment sql.NullString
+	var rating sql.NullInt64
+
+	query := `
+		SELECT id, skill_id, started_at, finished_at, rating, assessment
+		FROM sessions
+		WHERE finished_at IS NOT NULL
+	`
+	args := []interface{}{}
+	if skillID != "" {
+		query += " AND skill_id = ?"
+		args = append(args, skillID)
+	}
+	query += " ORDER BY finished_at DESC LIMIT 1"
+
+	err := db.conn.QueryRow(query, args...).Scan(
+		&s.ID, &s.SkillID, &s.StartedAt, &finishedAt, &rating, &assessment,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if finishedAt.Valid {
+		s.FinishedAt = finishedAt.String
+	}
+	if rating.Valid {
+		s.Rating = int(rating.Int64)
+	}
+	if assessment.Valid {
+		s.Assessment = assessment.String
+	}
+
+	// Get exchanges
+	rows, err := db.conn.Query(`
+		SELECT turn, question, answer, facet
+		FROM exchanges
+		WHERE session_id = ?
+		ORDER BY turn ASC
+	`, s.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var e Exchange
+		var facet sql.NullString
+		if err := rows.Scan(&e.Turn, &e.Question, &e.Answer, &facet); err != nil {
+			return nil, err
+		}
+		if facet.Valid {
+			e.Facet = facet.String
+		}
+		s.Exchanges = append(s.Exchanges, e)
+	}
+
+	return &s, rows.Err()
+}
+
 func (db *DB) SaveExchange(sessionID string, turn int, question, questionType, facet, answer string, struggled bool) error {
 	id := uuid.New().String()
 	struggledInt := 0

@@ -85,6 +85,25 @@ const (
 	stateLoading
 )
 
+// Phase name mappings for system-design-practical
+var phaseNames = map[string]string{
+	"requirements": "Requirements",
+	"entities":     "Core Entities",
+	"api":          "API Design",
+	"dataflow":     "Data Flow",
+	"highlevel":    "High-Level Design",
+	"deepdives":    "Deep Dives",
+}
+
+var phaseOrder = map[string]int{
+	"requirements": 1,
+	"entities":     2,
+	"api":          3,
+	"dataflow":     4,
+	"highlevel":    5,
+	"deepdives":    6,
+}
+
 type Model struct {
 	db           *db.DB
 	skill        *skills.Skill
@@ -95,6 +114,7 @@ type Model struct {
 	turn              int
 	maxTurns          int
 	lastResp          *llm.Response
+	phase             string // current phase for system-design-practical
 	history           []exchange
 	textarea          textarea.Model
 	viewport          viewport.Model
@@ -198,7 +218,7 @@ func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool, voic
 		skill:             skill,
 		state:             stateWelcome,
 		turn:              0,
-		maxTurns:          10,
+		maxTurns:          20, // Default; overridden per-domain in startDrill
 		showDebug:         false,
 		allowDomainPicker: allowDomainPicker,
 		voiceEnabled:      voiceEnabled,
@@ -267,6 +287,11 @@ func (m *Model) startDrill() tea.Cmd {
 		}
 	}
 
+	// Set maxTurns based on domain - practical interviews need more exchanges
+	if m.skill.Domain == "system-design-practical" {
+		m.maxTurns = 40 // Full interview simulation with 6 phases
+	}
+
 	// Initialize conversation
 	historyCtx, _ := m.db.GetHistoryContext(m.skill.ID, 5)
 
@@ -284,7 +309,7 @@ func (m *Model) startDrill() tea.Cmd {
 	m.historyCtx = historyCtx
 	m.difficulty = llm.DifficultyLevel(perf)
 
-	m.conversation = llm.NewConversation(m.skill, historyCtx, perf)
+	m.conversation = llm.NewConversation(m.skill, historyCtx, perf, m.maxTurns)
 	m.systemPrompt = m.conversation.SystemPrompt()
 	m.state = stateLoading
 	m.textarea.Focus()
@@ -323,6 +348,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.selectedDomain = "system-design"
 					return m, nil
 				case "4":
+					m.selectedDomain = "system-design-practical"
+					return m, nil
+				case "5":
 					m.selectedDomain = "leetcode-patterns"
 					return m, nil
 				}
@@ -491,6 +519,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.lastResp = msg.resp
 		m.turn++
+
+		// Update phase for system-design-practical
+		if msg.resp.Phase != "" {
+			m.phase = msg.resp.Phase
+		}
 
 		if msg.resp.IsFinal || m.turn > m.maxTurns {
 			m.state = stateRating
@@ -877,14 +910,15 @@ func (m Model) renderWelcome() string {
 			{"1", "data-structures", "Data Structures", "ds"},
 			{"2", "algorithm-patterns", "Algorithm Patterns", "algo"},
 			{"3", "system-design", "System Design", "sys"},
-			{"4", "leetcode-patterns", "LeetCode Patterns", "lc"},
+			{"4", "system-design-practical", "System Design Practical", "sysp"},
+			{"5", "leetcode-patterns", "LeetCode Patterns", "lc"},
 		}
 		for _, opt := range options {
 			prefix := "  "
 			if m.selectedDomain == opt.id {
 				prefix = "→ "
 			}
-			b.WriteString(fmt.Sprintf("%s[%s] %-22s (%s)\n", prefix, opt.key, opt.label, opt.sample))
+			b.WriteString(fmt.Sprintf("%s[%s] %-25s (%s)\n", prefix, opt.key, opt.label, opt.sample))
 		}
 		b.WriteString("\n")
 	} else {
@@ -920,12 +954,6 @@ func (m Model) renderWelcome() string {
 }
 
 func (m Model) renderHeader() string {
-	// Turn indicator (simplified, no more dots)
-	turnInfo := fmt.Sprintf("turn %d", m.turn)
-	if m.turn == 0 {
-		turnInfo = ""
-	}
-
 	// Domain hint
 	domainHint := domainShort(m.skill.Domain)
 
@@ -934,8 +962,18 @@ func (m Model) renderHeader() string {
 	if domainHint != "" {
 		header += "  " + domainStyle.Render(domainHint)
 	}
-	if turnInfo != "" {
-		header += "  " + helpStyle.Render(turnInfo)
+
+	// For system-design-practical, show phase instead of turn
+	if m.skill.Domain == "system-design-practical" && m.phase != "" {
+		phaseName := phaseNames[m.phase]
+		phaseNum := phaseOrder[m.phase]
+		if phaseName != "" && phaseNum > 0 {
+			phaseStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+			header += "  " + phaseStyle.Render(fmt.Sprintf("%s (%d/6)", phaseName, phaseNum))
+		}
+	} else if m.turn > 0 {
+		// Standard turn indicator for other domains
+		header += "  " + helpStyle.Render(fmt.Sprintf("turn %d", m.turn))
 	}
 
 	return header
@@ -949,6 +987,8 @@ func domainShort(domain string) string {
 		return "algo"
 	case "system-design":
 		return "sys"
+	case "system-design-practical":
+		return "sysp"
 	case "leetcode-patterns":
 		return "lc"
 	default:
@@ -1068,6 +1108,7 @@ func cycleDomainSelection(current string, delta int) string {
 		"data-structures",
 		"algorithm-patterns",
 		"system-design",
+		"system-design-practical",
 		"leetcode-patterns",
 	}
 
