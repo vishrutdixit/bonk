@@ -1076,6 +1076,30 @@ func init() {
 	})
 
 	register(&Skill{
+		ID:          "redis",
+		Name:        "Redis",
+		Domain:      "system-design",
+		Description: "In-memory data store for caching, messaging, and more",
+		Facets: []string{
+			"data structures: strings, hashes, lists, sets, sorted sets, HyperLogLog",
+			"use as cache: TTL, eviction policies (LRU, LFU), cache-aside pattern",
+			"pub/sub: fire-and-forget, no persistence, real-time broadcasts",
+			"streams: persistent, consumer groups, Kafka-lite for smaller scale",
+			"distributed locks: SETNX, Redlock algorithm, fencing tokens",
+			"rate limiting: sliding window with sorted sets or token bucket",
+			"sorted sets for leaderboards, rankings, priority queues",
+			"persistence: RDB snapshots vs AOF append-only log",
+			"clustering: Redis Cluster (sharding), Redis Sentinel (HA)",
+		},
+		ExampleProblems: []string{
+			"Design a rate limiter with Redis",
+			"Implement a leaderboard with Redis",
+			"Redis pub/sub vs Kafka - when to use each?",
+			"How would you implement distributed locks with Redis?",
+		},
+	})
+
+	register(&Skill{
 		ID:          "kafka",
 		Name:        "Apache Kafka",
 		Domain:      "system-design",
