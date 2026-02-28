@@ -861,6 +861,74 @@ func init() {
 	})
 
 	register(&Skill{
+		ID:          "sql-vs-nosql",
+		Name:        "SQL vs NoSQL",
+		Domain:      "system-design",
+		Description: "Choosing between relational and non-relational databases",
+		Facets: []string{
+			"relational (SQL): ACID, joins, schema enforcement, vertical scaling",
+			"document stores (MongoDB): flexible schema, nested data, horizontal scaling",
+			"key-value stores (Redis, DynamoDB): simple lookups, high throughput, caching",
+			"wide-column stores (Cassandra, HBase): time-series, write-heavy, column families",
+			"graph databases (Neo4j): relationships, traversals, social networks",
+			"when to use SQL (complex queries, transactions, strong consistency)",
+			"when to use NoSQL (scale, flexibility, specific access patterns)",
+		},
+		ExampleProblems: []string{
+			"Would you use SQL or NoSQL for an e-commerce product catalog?",
+			"What database would you choose for a social network's friend graph?",
+			"How would you store time-series metrics at scale?",
+			"When would you combine SQL and NoSQL in the same system?",
+		},
+	})
+
+	register(&Skill{
+		ID:          "database-indexing",
+		Name:        "Database Indexing",
+		Domain:      "system-design",
+		Description: "Index structures and query optimization",
+		Facets: []string{
+			"what an index is (data structure for fast lookups, trade-off: read vs write)",
+			"B-tree indexes (balanced tree, O(log n) lookups, range queries)",
+			"hash indexes (O(1) exact match, no range queries)",
+			"composite indexes (multi-column, leftmost prefix rule)",
+			"covering indexes (index contains all needed columns, no table lookup)",
+			"index selectivity (high cardinality = more selective = better)",
+			"when NOT to index (small tables, low selectivity, write-heavy)",
+			"query planning (EXPLAIN, index selection, full table scan)",
+		},
+		ExampleProblems: []string{
+			"How would you optimize a slow query?",
+			"When would a composite index help vs hurt?",
+			"Why might adding an index make writes slower?",
+			"How do you decide which columns to index?",
+		},
+	})
+
+	register(&Skill{
+		ID:          "acid-transactions",
+		Name:        "ACID & Transactions",
+		Domain:      "system-design",
+		Description: "Database transaction guarantees and isolation levels",
+		Facets: []string{
+			"Atomicity (all or nothing, rollback on failure)",
+			"Consistency (valid state to valid state, constraints enforced)",
+			"Isolation (concurrent transactions don't interfere)",
+			"Durability (committed data survives crashes, WAL)",
+			"isolation levels (read uncommitted, read committed, repeatable read, serializable)",
+			"phenomena (dirty reads, non-repeatable reads, phantom reads)",
+			"distributed transactions (2PC, Saga pattern, eventual consistency)",
+			"trade-offs (stronger isolation = lower concurrency)",
+		},
+		ExampleProblems: []string{
+			"What isolation level would you use for a banking system?",
+			"How would you handle transactions across microservices?",
+			"What's the difference between 2PC and Saga?",
+			"When is eventual consistency acceptable?",
+		},
+	})
+
+	register(&Skill{
 		ID:          "database-sharding",
 		Name:        "Database Sharding",
 		Domain:      "system-design",
