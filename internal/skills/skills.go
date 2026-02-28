@@ -1101,6 +1101,69 @@ func init() {
 	})
 
 	register(&Skill{
+		ID:          "realtime-communication",
+		Name:        "Real-Time Communication Patterns",
+		Domain:      "system-design",
+		Description: "Comparing polling, long-polling, SSE, and WebSockets for real-time updates",
+		Facets: []string{
+			"simple polling (client pulls at intervals, high latency, wasteful)",
+			"long polling (hold request open until data, better latency, connection overhead)",
+			"Server-Sent Events (SSE) (server push over HTTP, unidirectional, auto-reconnect)",
+			"WebSockets (persistent bidirectional, low latency, connection state management)",
+			"trade-offs: latency, scalability, firewall compatibility, mobile battery",
+			"when to use each (notifications→SSE, chat→WS, dashboards→polling/SSE)",
+		},
+		ExampleProblems: []string{
+			"How would you implement live sports scores?",
+			"How would you push notifications to a web app?",
+			"How would you build a collaborative document editor?",
+			"How would you implement a stock ticker?",
+		},
+	})
+
+	register(&Skill{
+		ID:          "change-data-capture",
+		Name:        "Change Data Capture (CDC)",
+		Domain:      "system-design",
+		Description: "Capturing and propagating database changes to downstream systems",
+		Facets: []string{
+			"what CDC is (streaming database changes as events)",
+			"log-based CDC (reading database WAL/binlog, e.g., Debezium)",
+			"trigger-based CDC (database triggers write to change table)",
+			"query-based CDC (polling for changes via timestamp/version)",
+			"use cases: cache invalidation, search index sync, event sourcing, data replication",
+			"trade-offs: latency, consistency, schema evolution, operational complexity",
+		},
+		ExampleProblems: []string{
+			"How would you keep Elasticsearch in sync with PostgreSQL?",
+			"How would you invalidate cache when database changes?",
+			"How would you replicate data across microservices?",
+			"How would you build an audit log for all database changes?",
+		},
+	})
+
+	register(&Skill{
+		ID:          "presigned-urls",
+		Name:        "Pre-signed URLs",
+		Domain:      "system-design",
+		Description: "Secure, temporary direct access to cloud storage objects",
+		Facets: []string{
+			"what pre-signed URLs are (time-limited signed URLs for direct S3/GCS access)",
+			"upload flow (client requests URL from server, uploads directly to storage)",
+			"download flow (server generates URL, client downloads directly)",
+			"security: expiration time, IP restrictions, content-type limits",
+			"benefits: offload bandwidth from app servers, reduce latency",
+			"use cases: large file uploads, CDN origin, mobile apps, browser uploads",
+		},
+		ExampleProblems: []string{
+			"How would you handle large file uploads without overloading your servers?",
+			"How would you let users download files securely without proxying through your API?",
+			"How would you implement resumable uploads for mobile apps?",
+			"How would you design a file sharing system like Dropbox?",
+		},
+	})
+
+	register(&Skill{
 		ID:          "ci-cd-systems",
 		Name:        "CI/CD Systems",
 		Domain:      "system-design-practical",
