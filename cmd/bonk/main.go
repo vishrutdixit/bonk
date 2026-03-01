@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -61,6 +62,7 @@ func selectSkill(database *db.DB, domainFilter string) *skills.Skill {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 
 	rootCmd := &cobra.Command{
 		Use:   "bonk [domain]",
