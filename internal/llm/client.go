@@ -56,6 +56,7 @@ type Response struct {
 	Assessment   string
 	LLMRating    int    // 1-4 rating from LLM, 0 if not provided
 	Phase        string // for system-design-practical: requirements, entities, api, dataflow, highlevel, deepdives
+	Struggled    bool   // did user struggle with this exchange?
 }
 
 type message struct {
@@ -215,9 +216,10 @@ Example bad feedback: "Great job overall! You showed solid understanding." (too 
 
 ## Output Format
 At the END of each response, add a metadata line in this exact format:
-[meta: facet=<facet_name>, type=<conceptual|problem>, final=<true|false>, rating=<1-4>]
+[meta: facet=<facet_name>, type=<conceptual|problem>, final=<true|false>, rating=<1-4>, struggled=<true|false>]
 
 Where:
+- struggled: true if user needed significant help, gave wrong answers, or showed confusion; false if they answered correctly/confidently
 - facet: which facet you're testing (use short names like "mechanics", "complexity", "application", etc.)
 - type: whether this is a conceptual or problem-based question
 - final: true only when you give the final assessment
@@ -344,9 +346,12 @@ Be specific and honest - no generic praise or sugarcoating.
 
 ## Output Format
 At the END of each response, add:
-[meta: facet=<facet>, type=problem, final=<true|false>, rating=<1-4>]
+[meta: facet=<facet>, type=problem, final=<true|false>, rating=<1-4>, struggled=<true|false>]
 
-Where rating is your assessment of their understanding (1=poor, 2=shaky, 3=solid, 4=excellent). Include on EVERY exchange.
+Where:
+- rating: your assessment of their understanding (1=poor, 2=shaky, 3=solid, 4=excellent)
+- struggled: true if user needed significant help, gave wrong answers, or showed confusion
+Include on EVERY exchange.
 
 Start by presenting a problem now.
 `, skill.Name, skill.Description, facets, problems, historySection, guideSection, difficultySection)
@@ -433,9 +438,10 @@ Guide the candidate through these phases IN ORDER. Track the current phase in yo
 
 ## Output Format
 At the END of each response, add:
-[meta: facet=<facet>, type=interview, final=<true|false>, rating=<1-4>, phase=<phase>]
+[meta: facet=<facet>, type=interview, final=<true|false>, rating=<1-4>, phase=<phase>, struggled=<true|false>]
 
 Where:
+- struggled: true if user needed significant help, gave wrong answers, or showed confusion
 - facet: area being probed (requirements, api-design, scalability, etc.)
 - type: always "interview" for this domain
 - final: true only when giving final assessment
@@ -490,8 +496,8 @@ Start the interview now.
 `, skill.Name, skill.Description, facets, problems, historySection, guideSection, skill.Name)
 }
 
-// Regex handles rating=3, rating=, or no rating at all
-var metaRegex = regexp.MustCompile(`\[meta:\s*facet=([^,]+),\s*type=([^,]+),\s*final=([^,\]]+)(?:,\s*rating=([^,\]]*))?(?:,\s*phase=([^\]]+))?\]`)
+// Regex handles optional fields: rating, phase, struggled
+var metaRegex = regexp.MustCompile(`\[meta:\s*facet=([^,]+),\s*type=([^,]+),\s*final=([^,\]]+)(?:,\s*rating=([^,\]]*))?(?:,\s*phase=([^,\]]*))?(?:,\s*struggled=([^\]]+))?\]`)
 
 func parseResponse(text string) *Response {
 	resp := &Response{Text: text}
@@ -515,6 +521,11 @@ func parseResponse(text string) *Response {
 		// Parse optional phase (for system-design-practical)
 		if len(match) > 5 && match[5] != "" {
 			resp.Phase = strings.ToLower(strings.TrimSpace(match[5]))
+		}
+
+		// Parse optional struggled flag
+		if len(match) > 6 && match[6] != "" {
+			resp.Struggled = strings.ToLower(strings.TrimSpace(match[6])) == "true"
 		}
 
 		// Remove meta line from display text

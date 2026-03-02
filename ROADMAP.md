@@ -299,7 +299,5 @@ Status: Implemented (February 28, 2026). `bonk sysp` domain with 6 practical ski
 - Integrate with local compiler/interpreter
 
 ## Tech Debt
-
-- Fix `struggled` tracking (currently hardcoded to false in db.go)
 - Consider splitting large skills.go into per-domain files
 - Add unit tests for SM-2 scheduling logic

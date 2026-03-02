@@ -409,7 +409,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.lastResp.QuestionType,
 						m.lastResp.Facet,
 						answer,
-						false,
+						m.lastResp.Struggled,
 					)
 				}
 
