@@ -218,6 +218,12 @@ func runDrill(cmd *cobra.Command, args []string) {
 
 		// Check if we should continue
 		if fm, ok := finalModel.(tui.Model); ok {
+			// Print any error that occurred during the TUI session
+			// (errors render in alt screen and get cleared on exit)
+			if tuiErr := fm.Err(); tuiErr != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", tuiErr)
+				os.Exit(1)
+			}
 			if pickedDomain := fm.SelectedDomain(); domainFilter == "" && pickedDomain != "" {
 				domainFilter = pickedDomain
 				allowDomainPicker = false

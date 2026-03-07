@@ -304,9 +304,11 @@ func (m Model) stopAndTranscribe() tea.Cmd {
 }
 
 func (m *Model) startDrill() tea.Cmd {
+	debugf("startDrill: beginning, skill=%s selectedDomain=%s", m.skill.ID, m.selectedDomain)
 	if m.domainPickerEnabled() && m.selectedDomain != "" {
 		if s := pickRandomSkillFromDomain(m.selectedDomain); s != nil {
 			m.skill = s
+			debugf("startDrill: switched to skill=%s", m.skill.ID)
 		}
 	}
 
@@ -337,6 +339,7 @@ func (m *Model) startDrill() tea.Cmd {
 	m.state = stateLoading
 	m.textarea.Focus()
 
+	debugf("startDrill: complete, launching session+coach commands")
 	return tea.Batch(
 		m.createSession(),
 		m.getCoachResponse(""),
@@ -534,14 +537,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncLayout()
 
 	case sessionCreatedMsg:
+		debugf("sessionCreatedMsg: sessionID=%s err=%v", msg.sessionID, msg.err)
 		if msg.err != nil {
+			debugf("QUIT: session creation failed: %v", msg.err)
 			m.err = msg.err
 			return m, tea.Quit
 		}
 		m.sessionID = msg.sessionID
 
 	case coachResponseMsg:
+		debugf("coachResponseMsg: err=%v", msg.err)
 		if msg.err != nil {
+			debugf("QUIT: coach response failed: %v", msg.err)
 			m.err = msg.err
 			return m, tea.Quit
 		}
@@ -1040,6 +1047,10 @@ func max(a, b int) int {
 
 func (m Model) ShouldContinue() bool {
 	return m.continueToNext
+}
+
+func (m Model) Err() error {
+	return m.err
 }
 
 func (m Model) SelectedDomain() string {
