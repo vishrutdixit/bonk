@@ -205,7 +205,10 @@ func runDrill(cmd *cobra.Command, args []string) {
 	voiceEnabled, _ := cmd.Flags().GetBool("voice")
 	for {
 		m := tui.NewModel(database, skill, allowDomainPicker, voiceEnabled)
-		p := tea.NewProgram(m, tea.WithAltScreen())
+		p := tea.NewProgram(m,
+			tea.WithAltScreen(),
+			tea.WithInputTTY(), // Explicitly use /dev/tty for input
+		)
 
 		finalModel, err := p.Run()
 		if err != nil {

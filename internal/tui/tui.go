@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +20,27 @@ import (
 	"bonk/internal/skills"
 	"bonk/internal/voice"
 )
+
+// Debug logging for input issues
+var debugLog *os.File
+
+func init() {
+	if os.Getenv("BONK_DEBUG") != "" {
+		home, _ := os.UserHomeDir()
+		debugLog, _ = os.OpenFile(
+			filepath.Join(home, ".bonk", "debug.log"),
+			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+			0644,
+		)
+	}
+}
+
+func debugf(format string, args ...interface{}) {
+	if debugLog != nil {
+		fmt.Fprintf(debugLog, format+"\n", args...)
+		debugLog.Sync()
+	}
+}
 
 // Styles
 var (
@@ -241,6 +263,7 @@ func NewModel(database *db.DB, skill *skills.Skill, allowDomainPicker bool, voic
 }
 
 func (m Model) Init() tea.Cmd {
+	debugf("Init: state=%d allowDomainPicker=%v skill=%s", m.state, m.allowDomainPicker, m.skill.ID)
 	// Just start the spinner - session starts when user presses enter
 	return m.spinner.Tick
 }
@@ -325,6 +348,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		debugf("KeyMsg: Type=%d String=%q Runes=%v Alt=%v state=%d",
+			msg.Type, msg.String(), msg.Runes, msg.Alt, m.state)
 		switch m.state {
 		case stateWelcome:
 			if m.domainPickerEnabled() {
@@ -360,10 +385,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter", "s", " ":
 				return m, m.startDrill()
 			case "q":
+				debugf("QUIT: matched 'q' key")
 				m.quitting = true
 				return m, tea.Quit
 			}
 			if msg.Type == tea.KeyEsc || msg.Type == tea.KeyCtrlC {
+				debugf("QUIT: matched Esc/CtrlC, Type=%d", msg.Type)
 				m.quitting = true
 				return m, tea.Quit
 			}
@@ -501,6 +528,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
+		debugf("WindowSizeMsg: %dx%d", msg.Width, msg.Height)
 		m.width = msg.Width
 		m.height = msg.Height
 		m.syncLayout()
