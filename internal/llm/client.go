@@ -28,10 +28,11 @@ var (
 )
 
 func getAPIKey() string {
-	if embeddedAPIKey != "" {
-		return embeddedAPIKey
+	// User's env var takes precedence over embedded key
+	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
+		return key
 	}
-	return os.Getenv("ANTHROPIC_API_KEY")
+	return embeddedAPIKey
 }
 
 func getModel() string {
