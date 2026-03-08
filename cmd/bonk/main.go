@@ -155,7 +155,24 @@ Examples:
 		Run:  runReview,
 	}
 	reviewCmd.Flags().BoolP("feedback", "f", false, "Get AI feedback on the session")
+	reviewCmd.Flags().Bool("summary", false, "Show transcript highlights summary")
 	rootCmd.AddCommand(reviewCmd)
+
+	historyCmd := &cobra.Command{
+		Use:   "history [session-id]",
+		Short: "List recent sessions or replay a specific session",
+		Long: `List your most recent drill sessions, or replay a specific session by ID.
+
+Examples:
+  bonk history
+  bonk history --limit 20
+  bonk history 123e4567-e89b-12d3-a456-426614174000`,
+		Args: cobra.MaximumNArgs(1),
+		Run:  runHistory,
+	}
+	historyCmd.Flags().IntP("limit", "n", 10, "Number of recent sessions to show")
+	historyCmd.Flags().Bool("summary", false, "Show transcript highlights summary for a session")
+	rootCmd.AddCommand(historyCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -455,29 +472,10 @@ func runReview(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// Get skill info
-	skill := skills.Get(session.SkillID)
-	skillName := session.SkillID
-	if skill != nil {
-		skillName = skill.Name
-	}
-
-	// Print session info
-	fmt.Println()
-	fmt.Printf("Session: %s\n", skillName)
-	fmt.Printf("Date: %s\n", session.StartedAt[:10])
-	fmt.Printf("Rating: %d/4\n", session.Rating)
-	fmt.Println()
-	fmt.Println(strings.Repeat("─", 60))
-
-	// Print exchanges
-	for _, ex := range session.Exchanges {
-		fmt.Println()
-		fmt.Printf("Coach:\n%s\n", ex.Question)
-		fmt.Println()
-		fmt.Printf("You:\n%s\n", ex.Answer)
-		fmt.Println()
-		fmt.Println(strings.Repeat("─", 40))
+	printSessionDetail(session, false)
+	wantSummary, _ := cmd.Flags().GetBool("summary")
+	if wantSummary {
+		printSessionSummary(session)
 	}
 
 	// Get AI feedback if requested
@@ -503,4 +501,229 @@ func runReview(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println(feedback)
 	}
+}
+
+func runHistory(cmd *cobra.Command, args []string) {
+	database, err := db.Open()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer database.Close()
+
+	if len(args) == 1 {
+		session, err := database.GetSessionByID(args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting session: %v\n", err)
+			os.Exit(1)
+		}
+		if session == nil {
+			fmt.Fprintf(os.Stderr, "Session not found: %s\n", args[0])
+			os.Exit(1)
+		}
+
+		printSessionDetail(session, true)
+		wantSummary, _ := cmd.Flags().GetBool("summary")
+		if wantSummary {
+			printSessionSummary(session)
+		}
+		return
+	}
+
+	limit, _ := cmd.Flags().GetInt("limit")
+	if limit <= 0 {
+		fmt.Fprintf(os.Stderr, "Limit must be greater than zero\n")
+		os.Exit(1)
+	}
+
+	sessions, err := database.GetRecentSessions(limit)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting session history: %v\n", err)
+		os.Exit(1)
+	}
+	if len(sessions) == 0 {
+		fmt.Println("No completed sessions found.")
+		return
+	}
+
+	fmt.Println()
+	fmt.Printf("%-36s  %-10s  %-6s  %s\n", "ID", "Date", "Rating", "Skill")
+	fmt.Println(strings.Repeat("─", 80))
+	for _, session := range sessions {
+		fmt.Printf("%-36s  %-10s  %d/4     %s\n",
+			session.ID,
+			dateOnly(session.FinishedAt),
+			session.Rating,
+			skillLabel(session.SkillID),
+		)
+	}
+}
+
+func printSessionDetail(session *db.SessionDetail, showID bool) {
+	fmt.Println()
+	fmt.Printf("Session: %s\n", skillLabel(session.SkillID))
+	if showID {
+		fmt.Printf("ID: %s\n", session.ID)
+	}
+	fmt.Printf("Date: %s\n", dateOnly(session.StartedAt))
+	fmt.Printf("Rating: %d/4\n", session.Rating)
+	if strings.TrimSpace(session.Assessment) != "" {
+		fmt.Printf("Assessment: %s\n", session.Assessment)
+	}
+	fmt.Println()
+	fmt.Println(strings.Repeat("─", 60))
+
+	for _, ex := range session.Exchanges {
+		fmt.Println()
+		fmt.Printf("Coach:\n%s\n", ex.Question)
+		fmt.Println()
+		fmt.Printf("You:\n%s\n", ex.Answer)
+		fmt.Println()
+		fmt.Println(strings.Repeat("─", 40))
+	}
+}
+
+type transcriptSummary struct {
+	Strongest      *db.Exchange
+	Weakest        *db.Exchange
+	MissedFacet    string
+	NextDrillFocus string
+}
+
+func buildTranscriptSummary(session *db.SessionDetail) transcriptSummary {
+	summary := transcriptSummary{}
+	if session == nil || len(session.Exchanges) == 0 {
+		return summary
+	}
+
+	facetMisses := make(map[string]int)
+	for i := range session.Exchanges {
+		ex := &session.Exchanges[i]
+		score := answerScore(ex)
+
+		if summary.Strongest == nil || score > answerScore(summary.Strongest) {
+			summary.Strongest = ex
+		}
+		if summary.Weakest == nil || score < answerScore(summary.Weakest) {
+			summary.Weakest = ex
+		}
+
+		facet := strings.TrimSpace(ex.Facet)
+		if facet == "" {
+			continue
+		}
+		if ex.Struggled || score <= 2 {
+			facetMisses[facet]++
+		}
+	}
+
+	var maxMisses int
+	for facet, misses := range facetMisses {
+		if misses > maxMisses {
+			maxMisses = misses
+			summary.MissedFacet = facet
+		}
+	}
+
+	if summary.MissedFacet != "" {
+		summary.NextDrillFocus = summary.MissedFacet
+	} else if summary.Weakest != nil && strings.TrimSpace(summary.Weakest.Facet) != "" {
+		summary.NextDrillFocus = strings.TrimSpace(summary.Weakest.Facet)
+	}
+
+	return summary
+}
+
+func answerScore(ex *db.Exchange) int {
+	if ex == nil {
+		return -999
+	}
+	answer := strings.TrimSpace(ex.Answer)
+	answerLower := strings.ToLower(answer)
+
+	score := len(strings.Fields(answer))
+	if answer == "" {
+		score -= 8
+	}
+	if strings.Contains(answer, "O(") {
+		score += 3
+	}
+	if containsAny(answerLower, "i don't know", "idk", "not sure", "i guess", "maybe") {
+		score -= 5
+	}
+	if ex.Struggled {
+		score -= 4
+	}
+	return score
+}
+
+func containsAny(s string, patterns ...string) bool {
+	for _, p := range patterns {
+		if strings.Contains(s, p) {
+			return true
+		}
+	}
+	return false
+}
+
+func printSessionSummary(session *db.SessionDetail) {
+	s := buildTranscriptSummary(session)
+	if s.Strongest == nil && s.Weakest == nil {
+		fmt.Println()
+		fmt.Println("Summary: no exchanges to analyze.")
+		return
+	}
+
+	fmt.Println()
+	fmt.Println("Summary")
+	fmt.Println(strings.Repeat("─", 60))
+	if s.Strongest != nil {
+		fmt.Printf("Strongest answer: turn %d", s.Strongest.Turn)
+		if strings.TrimSpace(s.Strongest.Facet) != "" {
+			fmt.Printf(" (%s)", s.Strongest.Facet)
+		}
+		fmt.Printf("\n  %s\n", summarizeText(s.Strongest.Answer, 110))
+	}
+	if s.Weakest != nil {
+		fmt.Printf("Weakest answer: turn %d", s.Weakest.Turn)
+		if strings.TrimSpace(s.Weakest.Facet) != "" {
+			fmt.Printf(" (%s)", s.Weakest.Facet)
+		}
+		fmt.Printf("\n  %s\n", summarizeText(s.Weakest.Answer, 110))
+	}
+	if s.MissedFacet != "" {
+		fmt.Printf("Key missed facet: %s\n", s.MissedFacet)
+	}
+	if s.NextDrillFocus != "" {
+		fmt.Printf("Next drill target: %s (skill: %s)\n", s.NextDrillFocus, skillLabel(session.SkillID))
+	}
+}
+
+func summarizeText(s string, max int) string {
+	trimmed := strings.Join(strings.Fields(strings.TrimSpace(s)), " ")
+	if trimmed == "" {
+		return "(empty response)"
+	}
+	if len(trimmed) <= max {
+		return trimmed
+	}
+	if max <= 3 {
+		return trimmed[:max]
+	}
+	return trimmed[:max-3] + "..."
+}
+
+func skillLabel(skillID string) string {
+	skill := skills.Get(skillID)
+	if skill == nil {
+		return skillID
+	}
+	return skill.Name
+}
+
+func dateOnly(ts string) string {
+	if len(ts) >= 10 {
+		return ts[:10]
+	}
+	return ts
 }

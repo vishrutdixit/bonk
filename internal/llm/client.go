@@ -27,6 +27,12 @@ var (
 	model  = getModel()
 )
 
+type httpDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+var httpClient httpDoer = &http.Client{}
+
 func getAPIKey() string {
 	// User's env var takes precedence over embedded key
 	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
@@ -614,8 +620,7 @@ func callAPI(systemPrompt string, messages []message) (*Response, error) {
 	req.Header.Set("anthropic-version", "2023-06-01")
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("send request: %w", err)
 	}
@@ -751,8 +756,7 @@ func callAPIRaw(systemPrompt string, messages []message, maxTokens int) (string,
 	req.Header.Set("anthropic-version", "2023-06-01")
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("send request: %w", err)
 	}

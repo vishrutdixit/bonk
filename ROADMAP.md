@@ -171,6 +171,15 @@ Improve `bonk stats` with more actionable insights.
 - Weak spot detection: "You struggle with X facet of Y skill"
 - Visual progress (sparklines or simple ASCII charts)
 
+### Post-Session Action Plan (S-M)
+
+Turn feedback into immediate next steps at the end of each drill.
+
+- Show 1-2 recommended follow-up bonk skills based on weak facets in the session
+- Suggest 1-2 external practice problems (for LC/DS/algo skills)
+- Include brief rationale for each recommendation ("missed invariants", "weak tradeoff analysis")
+- Make this the default post-session screen, with an option to skip
+
 ### Session History (M)
 
 Review past drill sessions.
@@ -179,7 +188,16 @@ Review past drill sessions.
 - `bonk history <session-id>` to replay Q&A transcript
 - Useful for spaced repetition review and self-assessment
 
-Status: Partially implemented (February 28, 2026). `bonk review` shows last session transcript, `bonk review --feedback` gets AI analysis of delivery/communication patterns. Still needs: list of sessions, session by ID.
+Status: Implemented (March 7, 2026). `bonk history` lists recent sessions, `bonk history <session-id>` replays a transcript by ID, and `bonk review` remains focused on the latest session plus optional AI feedback.
+
+### Transcript Highlights & Summaries (S-M)
+
+Make session review faster by extracting key moments automatically.
+
+- Add optional summary mode for `bonk history <session-id>` and `bonk review`
+- Highlight strongest answer, weakest answer, and key missed concept/facet
+- Provide a concise "next drill target" recommendation from transcript signals
+- Keep full transcript replay available for detailed review
 
 ### Skill Dependencies (M)
 
@@ -209,6 +227,24 @@ Based on recent sessions:
   Binary Search (struggled with invariants)
   → Search in Rotated Array       https://leetcode.com/problems/search-in-rotated-sorted-array/
 ```
+
+### TUI Modularization Refactor (M)
+
+Split `internal/tui/tui.go` into smaller, testable units while preserving behavior.
+
+- Split by concern:
+  - `model.go` (model struct + constructor)
+  - `update.go` (state machine and message handling)
+  - `view.go` (rendering functions)
+  - `layout.go` / `format.go` (pure helpers)
+- Break `Update` into state-specific handlers (`welcome`, `drilling`, `rating`, `loading`)
+- Isolate side effects behind small interfaces (voice, DB/session writes, conversation sender)
+- Move view-model shaping out of render paths (welcome/sidebar view models)
+- Centralize constants for domains, phases, keybindings, and turn caps
+- Add transition helpers to reduce scattered state mutation
+- Ship incrementally:
+  - Phase 1: file split + `Update` delegation
+  - Phase 2: interfaces and view-model extraction
 
 ## P3: Lower Priority
 

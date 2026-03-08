@@ -205,10 +205,11 @@ func (db *DB) FinishSession(sessionID string, rating int, assessment string) err
 // Exchange management
 
 type Exchange struct {
-	Turn     int
-	Question string
-	Answer   string
-	Facet    string
+	Turn      int
+	Question  string
+	Answer    string
+	Facet     string
+	Struggled bool
 }
 
 type SessionDetail struct {
@@ -222,10 +223,6 @@ type SessionDetail struct {
 }
 
 func (db *DB) GetLastSession(skillID string) (*SessionDetail, error) {
-	var s SessionDetail
-	var finishedAt, assessment sql.NullString
-	var rating sql.NullInt64
-
 	query := `
 		SELECT id, skill_id, started_at, finished_at, rating, assessment
 		FROM sessions
@@ -237,6 +234,23 @@ func (db *DB) GetLastSession(skillID string) (*SessionDetail, error) {
 		args = append(args, skillID)
 	}
 	query += " ORDER BY finished_at DESC LIMIT 1"
+
+	return db.getSessionDetail(query, args...)
+}
+
+func (db *DB) GetSessionByID(sessionID string) (*SessionDetail, error) {
+	return db.getSessionDetail(`
+		SELECT id, skill_id, started_at, finished_at, rating, assessment
+		FROM sessions
+		WHERE id = ? AND finished_at IS NOT NULL
+		LIMIT 1
+	`, sessionID)
+}
+
+func (db *DB) getSessionDetail(query string, args ...interface{}) (*SessionDetail, error) {
+	var s SessionDetail
+	var finishedAt, assessment sql.NullString
+	var rating sql.NullInt64
 
 	err := db.conn.QueryRow(query, args...).Scan(
 		&s.ID, &s.SkillID, &s.StartedAt, &finishedAt, &rating, &assessment,
@@ -260,7 +274,7 @@ func (db *DB) GetLastSession(skillID string) (*SessionDetail, error) {
 
 	// Get exchanges
 	rows, err := db.conn.Query(`
-		SELECT turn, question, answer, facet
+		SELECT turn, question, answer, facet, struggled
 		FROM exchanges
 		WHERE session_id = ?
 		ORDER BY turn ASC
@@ -273,12 +287,14 @@ func (db *DB) GetLastSession(skillID string) (*SessionDetail, error) {
 	for rows.Next() {
 		var e Exchange
 		var facet sql.NullString
-		if err := rows.Scan(&e.Turn, &e.Question, &e.Answer, &facet); err != nil {
+		var struggled int
+		if err := rows.Scan(&e.Turn, &e.Question, &e.Answer, &facet, &struggled); err != nil {
 			return nil, err
 		}
 		if facet.Valid {
 			e.Facet = facet.String
 		}
+		e.Struggled = struggled != 0
 		s.Exchanges = append(s.Exchanges, e)
 	}
 
@@ -703,6 +719,7 @@ func (db *DB) GetDomainStats(skillsByDomain map[string][]string) ([]DomainStats,
 
 // RecentSession holds info about a past session
 type RecentSession struct {
+	ID         string
 	SkillID    string
 	Rating     int
 	FinishedAt string
@@ -711,7 +728,7 @@ type RecentSession struct {
 // GetRecentSessions returns the N most recent completed sessions
 func (db *DB) GetRecentSessions(limit int) ([]RecentSession, error) {
 	rows, err := db.conn.Query(`
-		SELECT skill_id, rating, finished_at
+		SELECT id, skill_id, rating, finished_at
 		FROM sessions
 		WHERE finished_at IS NOT NULL AND rating IS NOT NULL
 		ORDER BY finished_at DESC
@@ -725,7 +742,7 @@ func (db *DB) GetRecentSessions(limit int) ([]RecentSession, error) {
 	var sessions []RecentSession
 	for rows.Next() {
 		var s RecentSession
-		if err := rows.Scan(&s.SkillID, &s.Rating, &s.FinishedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.SkillID, &s.Rating, &s.FinishedAt); err != nil {
 			return nil, err
 		}
 		sessions = append(sessions, s)
