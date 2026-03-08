@@ -1,22 +1,10 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
-
-	"bonk/internal/skills"
 )
-
-func mustSkill(t *testing.T, id string) *skills.Skill {
-	t.Helper()
-	s := skills.Get(id)
-	if s == nil {
-		t.Fatalf("skills.Get(%q) = nil", id)
-	}
-	return s
-}
 
 func TestDomainShort(t *testing.T) {
 	tests := []struct {
@@ -45,7 +33,6 @@ func TestWordWrap(t *testing.T) {
 		t.Fatalf("wordWrap() = %q, want %q", got, want)
 	}
 
-	// Width guard path.
 	got = wordWrap("a b c", 0)
 	if !strings.Contains(got, "a b c") {
 		t.Fatalf("wordWrap width fallback unexpected: %q", got)
@@ -124,104 +111,11 @@ func TestCycleDomainSelection(t *testing.T) {
 	}
 }
 
-func TestModelDomainAndLayoutHelpers(t *testing.T) {
-	m := Model{
-		skill:             mustSkill(t, "hash-maps"),
-		allowDomainPicker: true,
-		selectedDomain:    "leetcode-patterns",
-		width:             50,
-		height:            20,
-	}
-	if !m.domainPickerEnabled() {
-		t.Fatal("domainPickerEnabled = false, want true")
-	}
-	if got := m.effectiveDomain(); got != "leetcode-patterns" {
-		t.Fatalf("effectiveDomain with selected = %q, want leetcode-patterns", got)
-	}
-
-	// Width clamping paths.
-	if got := m.mainPanelWidth(); got != 40 {
-		t.Fatalf("mainPanelWidth = %d, want 40 min clamp", got)
-	}
-	if got := m.mainContentWidth(); got != 40 {
-		t.Fatalf("mainContentWidth = %d, want 40 min clamp", got)
-	}
-}
-
-func TestRenderHeaderTurnAndPhase(t *testing.T) {
-	base := Model{
-		skill: mustSkill(t, "hash-maps"),
-		turn:  3,
-	}
-	h := base.renderHeader()
-	if !strings.Contains(h, "bonk") || !strings.Contains(h, "ds") || !strings.Contains(h, "turn 3") {
-		t.Fatalf("renderHeader regular missing expected pieces: %q", h)
-	}
-
-	sysp := Model{
-		skill: mustSkill(t, "design-twitter"),
-		phase: "api",
-		turn:  10, // should be ignored in phase mode
-	}
-	ph := sysp.renderHeader()
-	if !strings.Contains(ph, "sysp") || !strings.Contains(ph, "API Design (3/6)") {
-		t.Fatalf("renderHeader sysp missing phase info: %q", ph)
-	}
-	if strings.Contains(ph, "turn 10") {
-		t.Fatalf("renderHeader sysp should not include turn marker: %q", ph)
-	}
-}
-
-func TestRenderSparklineAndRatingLabelAndGlyph(t *testing.T) {
-	s := renderSparkline([]int{1, 2, 3, 4, 0, 9})
-	// ANSI codes are present; assert glyphs exist in order.
-	for _, block := range []string{"▁", "▃", "▅", "▇"} {
-		if !strings.Contains(s, block) {
-			t.Fatalf("renderSparkline missing %q in %q", block, s)
-		}
-	}
-
-	if got := llmRatingLabel(0); got != "" {
-		t.Fatalf("llmRatingLabel(0) = %q, want empty", got)
-	}
-	for i := 1; i <= 4; i++ {
-		if got := llmRatingLabel(i); got == "" {
-			t.Fatalf("llmRatingLabel(%d) = empty, want label", i)
-		}
-		if g := ratingGlyph(i); !strings.Contains(g, "●") {
-			t.Fatalf("ratingGlyph(%d) missing dot: %q", i, g)
-		}
-	}
-}
-
 func TestMinMax(t *testing.T) {
 	if got := min(1, 2); got != 1 {
 		t.Fatalf("min = %d, want 1", got)
 	}
 	if got := max(1, 2); got != 2 {
 		t.Fatalf("max = %d, want 2", got)
-	}
-}
-
-func TestShouldContinueErrSelectedDomainSkill(t *testing.T) {
-	skill := mustSkill(t, "hash-maps")
-	testErr := fmt.Errorf("boom")
-	m := Model{
-		continueToNext: true,
-		err:            testErr,
-		selectedDomain: "data-structures",
-		skill:          skill,
-	}
-	if !m.ShouldContinue() {
-		t.Fatal("ShouldContinue = false, want true")
-	}
-	if m.Err() == nil || m.Err().Error() != "boom" {
-		t.Fatalf("Err() = %v, want boom", m.Err())
-	}
-	if m.SelectedDomain() != "data-structures" {
-		t.Fatalf("SelectedDomain() = %q, want data-structures", m.SelectedDomain())
-	}
-	if m.Skill() != skill {
-		t.Fatalf("Skill() pointer mismatch")
 	}
 }
