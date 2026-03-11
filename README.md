@@ -36,12 +36,6 @@ Build from source:
 go build -o bin/bonk ./cmd/bonk
 ```
 
-## Why Bonk
-
-- Infinite, self-improving deck of concepts to drill
-- Conversation-first practice instead of flashcard memorization
-- Smart next-skill selection: due -> new -> random
-
 ## Common Commands
 
 ```bash
@@ -58,14 +52,6 @@ bonk review                # Review last session transcript
 bonk review --feedback     # Get AI feedback on your performance
 bonk version
 ```
-
-## Voice Mode
-
-Voice mode is enabled by default on macOS. Coach questions are spoken aloud and you record your answers.
-
-- Press `space` to record your answer
-- Press `s` to skip speech
-- Use `bonk --voice=false` to disable
 
 ## Mobile / Remote Drill
 
