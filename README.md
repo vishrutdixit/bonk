@@ -9,8 +9,6 @@
   <a href="https://github.com/vishrutdixit/bonk/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/vishrutdixit/bonk?style=social"></a>
 </p>
 
-`bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules reviews with SM-2 so you revisit skills at the right time.
-
 <p align="center">
   <img src="assets/welcome.png" height="250" alt="Welcome screen">&nbsp;&nbsp;&nbsp;&nbsp;
   <img src="assets/question.png" height="250" alt="Drill session">
