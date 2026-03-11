@@ -16,6 +16,8 @@
   <img src="assets/question.png" height="250" alt="Drill session">
 </p>
 
+> *I was trying to use an LLM as a learning tool for CS concepts. This isn't a new concept -- people have been using LLMs for learning for a while. But it was doing a great job of strengthening my understanding. I then was reminded of how my wife Veena used to do Anki spaced repetition drills in medical school to study. This is super common among med students. They download decks / flashcards and drill them. I then had the idea that I can use GenAI to make **infinite** decks. Yes, it's a tiny wrapper around LLMs, but it provides a ton of value. The deck seed material can grow over time. We can add different concepts, facets, etc. That's the idea.*
+
 ## Installation
 
 ```bash
