@@ -9,12 +9,12 @@
   <a href="https://github.com/vishrutdixit/bonk/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/vishrutdixit/bonk?style=social"></a>
 </p>
 
-`bonk` is a terminal app for technical interview prep. It asks probing follow-ups, adapts to your answers, and schedules reviews with SM-2 so you revisit skills at the right time.
-
 <p align="center">
   <img src="assets/welcome.png" height="250" alt="Welcome screen">&nbsp;&nbsp;&nbsp;&nbsp;
   <img src="assets/question.png" height="250" alt="Drill session">
 </p>
+
+> *I was trying to use an LLM as a learning tool for CS concepts. This isn't a new concept -- people have been using LLMs for learning for a while. But it was doing a great job of strengthening my understanding. I then was reminded of how my wife used to do Anki spaced repetition drills in medical school to study. This is super common among med students. They download decks / flashcards and drill them. I then had the idea that I can use GenAI to make **infinite** decks. Yes, it's a tiny wrapper around LLMs, but it provides a ton of value. The deck seed material can grow over time. We can add different concepts, facets, etc. That's the idea.*
 
 ## Installation
 
@@ -36,12 +36,6 @@ Build from source:
 go build -o bin/bonk ./cmd/bonk
 ```
 
-## Why Bonk
-
-- Infinite, self-improving deck of concepts to drill
-- Conversation-first practice instead of flashcard memorization
-- Smart next-skill selection: due -> new -> random
-
 ## Common Commands
 
 ```bash
@@ -57,21 +51,6 @@ bonk info hash-maps
 bonk review                # Review last session transcript
 bonk review --feedback     # Get AI feedback on your performance
 bonk version
-```
-
-## Voice Mode
-
-Voice mode is enabled by default on macOS. Coach questions are spoken aloud and you record your answers.
-
-- Press `space` to record your answer
-- Press `s` to skip speech
-- Use `bonk --voice=false` to disable
-
-## Mobile / Remote Drill
-
-```bash
-brew install ttyd
-bonk serve
 ```
 
 Open the printed URL from your phone. Works on the same WiFi, or anywhere via Tailscale (auto-detected).
