@@ -53,13 +53,6 @@ bonk review --feedback     # Get AI feedback on your performance
 bonk version
 ```
 
-## Mobile / Remote Drill
-
-```bash
-brew install ttyd
-bonk serve
-```
-
 Open the printed URL from your phone. Works on the same WiFi, or anywhere via Tailscale (auto-detected).
 
 ## Configuration
